@@ -129,7 +129,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2358901034500306714, guid: 42bcf3b376f713f4d9f1e4baca0057fc, type: 3}
       propertyPath: amountToSpawn
-      value: 9999
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5317658233029375167, guid: 42bcf3b376f713f4d9f1e4baca0057fc, type: 3}
       propertyPath: m_Name

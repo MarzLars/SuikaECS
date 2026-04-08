@@ -698,7 +698,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Android: UNITY_PHYSICS_CUSTOM
+    Android: UNITY_PHYSICS_CUSTOM;APP_UI_EDITOR_ONLY
     Standalone: UNITY_PHYSICS_CUSTOM;APP_UI_EDITOR_ONLY
   additionalCompilerArguments: {}
   platformArchitecture: {}

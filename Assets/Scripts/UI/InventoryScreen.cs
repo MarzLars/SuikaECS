@@ -31,7 +31,7 @@ namespace Unity.DotsUISample
 
         public void UpdateInventory(DynamicBuffer<InventoryItem> itemsBuf, int energyCount,
             CollectablesData collectablesData) {
-            for (var i = 0; i < itemsBuf.Length && i < m_Slots.Length; i++) {
+            for (int i = 0; i < itemsBuf.Length && i < m_Slots.Length; i++) {
                 var type = itemsBuf[i].Type;
                 var sprite = collectablesData.Collectables[(int)type].Icon;
                 m_Slots[i].SetItem(sprite);
@@ -47,7 +47,7 @@ namespace Unity.DotsUISample
         }
 
         void InitializeSlots() {
-            for (var i = 0; i < k_InitialSlotCount; i++) {
+            for (int i = 0; i < k_InitialSlotCount; i++) {
                 var slot = new InventorySlot();
                 slot.AddToClassList(k_SlotUssClassName);
                 m_SlotsContainer.Add(slot);

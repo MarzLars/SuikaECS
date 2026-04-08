@@ -6,6 +6,7 @@ using UnityEngine;
 namespace Unity.DotsUISample
 {
     // Update after physics so we can get the accurate player position.
+    /*
     [UpdateAfter(typeof(FixedStepSimulationSystemGroup))]
     public partial struct CameraFollowSystem : ISystem
     {
@@ -41,4 +42,5 @@ namespace Unity.DotsUISample
             }
         }
     }
+    */
 }

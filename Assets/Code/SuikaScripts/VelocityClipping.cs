@@ -3,12 +3,15 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Physics.Systems;
 using UnityEngine;
 
-namespace Unity.Physics.Tests
+namespace Code.SuikaScripts
 {
-    public struct ClipVelocitiesData : IComponentData {}
+    public struct ClipVelocitiesData : IComponentData
+    {
+    }
 
     [Serializable]
     public class VelocityClipping : MonoBehaviour
@@ -53,7 +56,8 @@ namespace Unity.Physics.Tests
 
                     // Clip velocities using a simple heuristic:
                     // zero out velocities that are smaller than gravity in one step
-                    if (math.length(motionVelocity.LinearVelocity) < motionVelocity.GravityFactor * gravityLengthInOneStep)
+                    if (math.length(motionVelocity.LinearVelocity) <
+                        motionVelocity.GravityFactor * gravityLengthInOneStep)
                     {
                         // Revert integration
                         Integrator.Integrate(ref motionData.WorldFromMotion, motionVelocity, -TimeStep);
@@ -73,16 +77,12 @@ namespace Unity.Physics.Tests
         public void OnUpdate(ref SystemState state)
         {
             var physicsStep = PhysicsStep.Default;
-            if (SystemAPI.HasSingleton<PhysicsStep>())
-            {
-                physicsStep = SystemAPI.GetSingleton<PhysicsStep>();
-            }
+            if (SystemAPI.HasSingleton<PhysicsStep>()) physicsStep = SystemAPI.GetSingleton<PhysicsStep>();
 
             //var world = GetSingleton<PhysicsWorldSingleton>().PhysicsWorld;
             var world = SystemAPI.GetSingletonRW<PhysicsWorldSingleton>().ValueRW.PhysicsWorld;
             // No need for clipping if Havok is used
             if (physicsStep.SimulationType == SimulationType.UnityPhysics)
-            {
                 state.Dependency = new ClipVelocitiesJob
                 {
                     MotionVelocities = world.MotionVelocities,
@@ -90,7 +90,6 @@ namespace Unity.Physics.Tests
                     TimeStep = SystemAPI.Time.DeltaTime,
                     Gravity = physicsStep.Gravity
                 }.Schedule(state.Dependency);
-            }
         }
     }
 }

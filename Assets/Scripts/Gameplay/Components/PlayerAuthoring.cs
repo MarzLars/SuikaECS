@@ -18,7 +18,7 @@ namespace Unity.DotsUISample
                 AddBuffer<InventoryItem>(entity);
                 var buf = AddBuffer<CollectableCount>(entity);
                 buf.Length = authoring.collectables.Collectables.Length;
-                for (var i = 0; i < buf.Length; i++) buf[i] = new CollectableCount { Count = 0 };
+                for (int i = 0; i < buf.Length; i++) buf[i] = new CollectableCount { Count = 0 };
             }
         }
     }

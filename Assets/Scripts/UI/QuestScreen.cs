@@ -30,7 +30,7 @@ namespace Unity.DotsUISample
             titleLabel.AddToClassList(k_QuestTitleUssClassName);
             m_ChecklistPanel.Add(titleLabel);
             m_CollectableLabels = new Label[m_QuestData.Items.Length];
-            for (var i = 0; i < m_QuestData.Items.Length; i++) {
+            for (int i = 0; i < m_QuestData.Items.Length; i++) {
                 m_CollectableLabels[i] = new Label();
                 m_CollectableLabels[i].AddToClassList(k_QuestCollectableUssClassName);
                 m_ChecklistPanel.Add(m_CollectableLabels[i]);
@@ -47,12 +47,12 @@ namespace Unity.DotsUISample
             if (hasAllItems) {
                 m_CollectableLabels[0].text = m_QuestData.CompletionText.ToUpper();
                 m_CollectableLabels[0].RemoveFromClassList(k_QuestCollectableCompletedUssClassName);
-                for (var i = 1; i < m_CollectableLabels.Length; i++) m_CollectableLabels[i].text = "";
+                for (int i = 1; i < m_CollectableLabels.Length; i++) m_CollectableLabels[i].text = "";
 
                 return;
             }
 
-            for (var i = 0; i < m_QuestData.Items.Length; i++) {
+            for (int i = 0; i < m_QuestData.Items.Length; i++) {
                 string collectableName = collectables.Collectables[i].Name.ToUpper();
                 int currentCount = buf[i].Count;
                 int targetCount = m_QuestData.Items[i].GoalCount;

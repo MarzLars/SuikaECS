@@ -14,8 +14,8 @@ namespace Code.CodeMonkey_EcsTutorial.PrefabSpawning
                 var entity = GetEntity(TransformUsageFlags.None);
 
                 AddComponent(entity, new SpawnCubeConfig {
-                    cubePrefabEntity = GetEntity(authoring.cubePrefab, TransformUsageFlags.Dynamic),
-                    amountToSpawn = authoring.amountToSpawn
+                    CubePrefabEntity = GetEntity(authoring.cubePrefab, TransformUsageFlags.Dynamic),
+                    AmountToSpawn = authoring.amountToSpawn
                 });
             }
         }
@@ -23,7 +23,7 @@ namespace Code.CodeMonkey_EcsTutorial.PrefabSpawning
 
     public struct SpawnCubeConfig : IComponentData
     {
-        public Entity cubePrefabEntity;
-        public int amountToSpawn;
+        public Entity CubePrefabEntity;
+        public int AmountToSpawn;
     }
 }

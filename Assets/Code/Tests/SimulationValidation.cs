@@ -4,13 +4,15 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Joint = Unity.Physics.Joint;
 
-namespace Unity.Physics.Tests
+namespace Code.Tests
 {
     public class SimulationValidationAuthoring : MonoBehaviour
     {
@@ -107,13 +109,13 @@ namespace Unity.Physics.Tests
         [GenerateTestsForBurstCompatibility]
         void Execute(in Entity entity, in PhysicsJoint joint, in PhysicsConstrainedBodyPair bodyPair)
         {
-            var jointIndex = DynamicsWorld.GetJointIndex(entity);
+            int jointIndex = DynamicsWorld.GetJointIndex(entity);
             var dynamicsJoint = Joints[jointIndex];
-            var bodyAIx = dynamicsJoint.BodyPair.BodyIndexA;
-            var bodyBIx = dynamicsJoint.BodyPair.BodyIndexB;
+            int bodyAIx = dynamicsJoint.BodyPair.BodyIndexA;
+            int bodyBIx = dynamicsJoint.BodyPair.BodyIndexB;
 
-            var bodyAIsStatic = bodyAIx < 0 || bodyAIx >= DynamicsWorld.NumMotions;
-            var bodyBIsStatic = bodyBIx < 0 || bodyBIx >= DynamicsWorld.NumMotions;
+            bool bodyAIsStatic = bodyAIx < 0 || bodyAIx >= DynamicsWorld.NumMotions;
+            bool bodyBIsStatic = bodyBIx < 0 || bodyBIx >= DynamicsWorld.NumMotions;
             if (bodyAIsStatic && bodyBIsStatic)
             {
                 return;
@@ -139,7 +141,7 @@ namespace Unity.Physics.Tests
                 case JointType.BallAndSocket:
                 {
                     var deltaPos = anchorAWorld.pos - anchorBWorld.pos;
-                    var posErrorSq = math.lengthsq(deltaPos);
+                    float posErrorSq = math.lengthsq(deltaPos);
                     if (posErrorSq > PositionErrorTolSq)
                     {
                         Errors.Add($"Validation (BallAndSocket): joint anchor position is violated by {math.sqrt(posErrorSq)} meters, which exceeds position error tolerance of {PositionErrorTol} meters.");
@@ -156,26 +158,26 @@ namespace Unity.Physics.Tests
                     byte hingeConstraintBlockIndex = (byte)(joint.JointType == JointType.Hinge ? 0 : 1);
                     var hingeConstraint = joint[hingeConstraintBlockIndex];
                     ValidateConstraintType(hingeConstraint, ConstraintType.Angular);
-                    var hingeAxisIndex = hingeConstraint.FreeAxis2D;
+                    int hingeAxisIndex = hingeConstraint.FreeAxis2D;
                     var hingeAxis = new float3x3(anchorAWorld.rot)[hingeAxisIndex];
 
                     // make sure rotation happens about the hinge axis
                     var rotBToA = math.mul(math.inverse(anchorAWorld.rot), anchorBWorld.rot);
                     rotBToA = math.normalize(rotBToA);
-                    ((Quaternion)rotBToA).ToAngleAxis(out var angle, out var actualRotationAxis);
+                    ((Quaternion)rotBToA).ToAngleAxis(out float angle, out var actualRotationAxis);
                     // We can only get a meaningful rotation axis between the two anchors if there is some reasonable amount of delta rotation.
                     // Note: angle is in degrees here
-                    var absAngle = math.abs(angle);
-                    var epsValidationAngle = 10.0f;
+                    float absAngle = math.abs(angle);
+                    float epsValidationAngle = 10.0f;
                     if (absAngle > epsValidationAngle && absAngle < 360f - epsValidationAngle)
                     {
                         actualRotationAxis = math.mul(anchorAWorld.rot, actualRotationAxis);
                         actualRotationAxis = math.normalize(actualRotationAxis);
 
                         // make sure hinge axis is aligned in both anchor frames
-                        var cosAngle = math.dot(actualRotationAxis, hingeAxis);
-                        var absCosAngle = math.abs(cosAngle);
-                        var epsCos = OrientationErrorTolCos;
+                        float cosAngle = math.dot(actualRotationAxis, hingeAxis);
+                        float absCosAngle = math.abs(cosAngle);
+                        float epsCos = OrientationErrorTolCos;
                         if (absCosAngle < epsCos)
                         {
                             Errors.Add($"Validation (Hinge or equivalent): hinge axis orientation violated by {math.acos(absCosAngle)} radians, which exceeds orientation error tolerance of {OrientationErrorTol} radians");
@@ -184,7 +186,7 @@ namespace Unity.Physics.Tests
 
                     // Make sure anchor positions are sufficiently close, as the bodies rotate around them.
                     var deltaPos = anchorAWorld.pos - anchorBWorld.pos;
-                    var posErrorSq = math.lengthsq(deltaPos);
+                    float posErrorSq = math.lengthsq(deltaPos);
                     if (posErrorSq > PositionErrorTolSq)
                     {
                         Errors.Add($"Validation (Hinge or equivalent): joint anchor position is violated by {math.sqrt(posErrorSq)} meters, which exceeds position error tolerance of {PositionErrorTol} meters.");
@@ -199,8 +201,8 @@ namespace Unity.Physics.Tests
                     // orientation
                     var relQ = math.mul(math.inverse(anchorAWorld.rot), anchorBWorld.rot);
                     relQ = math.normalize(relQ);
-                    var angle = 2.0 * math.acos(relQ.value.w);
-                    var cosAngle = math.cos(angle);
+                    double angle = 2.0 * math.acos(relQ.value.w);
+                    double cosAngle = math.cos(angle);
                     if (cosAngle < OrientationErrorTolCos)
                     {
                         Errors.Add($"Validation (Fixed): relative orientation violated by {angle} radians, which exceeds orientation error tolerance of {OrientationErrorTol} radians");
@@ -208,7 +210,7 @@ namespace Unity.Physics.Tests
 
                     // position
                     var deltaPos = anchorAWorld.pos - anchorBWorld.pos;
-                    var posErrorSq = math.lengthsq(deltaPos);
+                    float posErrorSq = math.lengthsq(deltaPos);
                     if (posErrorSq > PositionErrorTolSq)
                     {
                         Errors.Add($"Validation (Fixed): joint anchor position is violated by {math.sqrt(posErrorSq)} meters, which exceeds position error tolerance of {PositionErrorTol} meters.");
@@ -219,7 +221,7 @@ namespace Unity.Physics.Tests
                 case JointType.Prismatic:
                 case JointType.PositionalMotor:
                 {
-                    var constrainedAxisIndex = -1;
+                    int constrainedAxisIndex = -1;
                     if (joint.JointType == JointType.Prismatic)
                     {
                         var linearConstraint = joint[1];
@@ -238,7 +240,7 @@ namespace Unity.Physics.Tests
                     // We expect the prismatic axis in both anchor frames to be parallel and in the same direction.
                     var axisA = new float3x3(anchorAWorld.rot)[constrainedAxisIndex];
                     var axisB = new float3x3(anchorBWorld.rot)[constrainedAxisIndex];
-                    var absCosAngle = math.dot(axisA, axisB);
+                    float absCosAngle = math.dot(axisA, axisB);
                     if (absCosAngle < OrientationErrorTolCos)
                     {
                         Errors.Add($"Validation (Prismatic or equivalent): prismatic axis orientation violated by {math.acos(absCosAngle)} radians, which exceeds orientation error tolerance of {OrientationErrorTol} radians");
@@ -251,7 +253,7 @@ namespace Unity.Physics.Tests
                     var ab = anchorBWorld.pos - anchorAWorld.pos;
                     // calculate rejection of ab with respect to plane formed by axisA and anchorAWorld.pos
                     ab -= math.dot(ab, axisA) * axisA;
-                    var distToPrismaticAxisSq = math.lengthsq(ab);
+                    float distToPrismaticAxisSq = math.lengthsq(ab);
                     if (distToPrismaticAxisSq > PositionErrorTolSq)
                     {
                         Errors.Add($"Validation (Prismatic or equivalent): joint anchor lies {math.sqrt(distToPrismaticAxisSq)} meters from prismatic axis, which exceeds position error tolerance of {PositionErrorTol} meters.");
@@ -263,12 +265,12 @@ namespace Unity.Physics.Tests
                 {
                     var motorConstraint = joint[0];
                     ValidateConstraintType(motorConstraint, ConstraintType.LinearVelocityMotor);
-                    var constrainedAxisIndex = motorConstraint.ConstrainedAxis1D;
+                    int constrainedAxisIndex = motorConstraint.ConstrainedAxis1D;
 
                     // We expect the linear velocity motor axis (prismatic axis) in both anchor frames to be parallel and in the same direction
                     var axisA = new float3x3(anchorAWorld.rot)[constrainedAxisIndex];
                     var axisB = new float3x3(anchorBWorld.rot)[constrainedAxisIndex];
-                    var absCosAngle = math.dot(axisA, axisB);
+                    float absCosAngle = math.dot(axisA, axisB);
                     if (absCosAngle < OrientationErrorTolCos)
                     {
                         Errors.Add($"Validation (LinearVelocityMotor): prismatic axis orientation violated by {math.acos(absCosAngle)} radians, which exceeds orientation error tolerance of {OrientationErrorTol} radians");
@@ -278,7 +280,7 @@ namespace Unity.Physics.Tests
                     var ba = anchorAWorld.pos - anchorBWorld.pos;
                     // calculate rejection of ba with respect to plane formed by axisB and anchorBWorld.pos
                     ba -= math.dot(ba, axisB) * axisB;
-                    var distToPrismaticAxisSq = math.lengthsq(ba);
+                    float distToPrismaticAxisSq = math.lengthsq(ba);
                     if (distToPrismaticAxisSq > PositionErrorTolSq)
                     {
                         Errors.Add($"Validation (LinearVelocityMotor): joint anchor lies {math.sqrt(distToPrismaticAxisSq)} meters from prismatic axis, which exceeds position error tolerance of {PositionErrorTol} meters.");
@@ -291,11 +293,11 @@ namespace Unity.Physics.Tests
                     var distanceConstraint = joint[0];
                     ValidateConstraintType(distanceConstraint, ConstraintType.Linear);
 
-                    var min = distanceConstraint.Min;
-                    var max = distanceConstraint.Max;
+                    float min = distanceConstraint.Min;
+                    float max = distanceConstraint.Max;
 
                     var deltaPos = anchorAWorld.pos - anchorBWorld.pos;
-                    var distance = math.length(deltaPos);
+                    float distance = math.length(deltaPos);
 
                     if (distance < min - PositionErrorTol || distance > max + PositionErrorTol)
                     {
@@ -319,7 +321,7 @@ namespace Unity.Physics.Tests
                     int constrainedAxisIndex = motorConstraint.ConstrainedAxis1D;
 
                     // expected angular velocity in world space
-                    var speed = motorConstraint.Target[constrainedAxisIndex];
+                    float speed = motorConstraint.Target[constrainedAxisIndex];
                     var expectedAngVelRel = new float3x3(anchorAWorld.rot)[constrainedAxisIndex] * speed;
 
                     // get actual angular velocity
@@ -330,7 +332,7 @@ namespace Unity.Physics.Tests
 
                     // actual angular velocity in world space (relative to B)
                     var angVelRel = wA - wB;
-                    var check = math.abs(math.lengthsq(expectedAngVelRel - angVelRel));
+                    float check = math.abs(math.lengthsq(expectedAngVelRel - angVelRel));
                     if (check > AngVelErrorTolSq)
                     {
                         Errors.Add($"Validation (AngularVelocityMotor): angular joint velocity {angVelRel} ({check}) exceeds expected angular velocity {expectedAngVelRel} by more than provided error tolerance of {AngVelErrorTol} rad/s.");
@@ -345,7 +347,7 @@ namespace Unity.Physics.Tests
                     int constrainedAxisIndex = motorConstraint.ConstrainedAxis1D;
 
                     // expected angular velocity in world space
-                    var speed = motorConstraint.Target[constrainedAxisIndex];
+                    float speed = motorConstraint.Target[constrainedAxisIndex];
                     var expectedLinVelRel = new float3x3(anchorBWorld.rot)[constrainedAxisIndex] * speed;
 
                     // get actual linear velocity
@@ -367,19 +369,19 @@ namespace Unity.Physics.Tests
                     var motorConstraint = joint[0];
                     ValidateConstraintType(motorConstraint, ConstraintType.RotationMotor);
                     int constrainedAxisIndex = motorConstraint.ConstrainedAxis1D;
-                    var targetAngle = motorConstraint.Target[constrainedAxisIndex];
+                    float targetAngle = motorConstraint.Target[constrainedAxisIndex];
 
                     // Calculate angle between the joint attachment frames.
                     // Note: we already confirmed that the joint axis is aligned in both anchor frames in the pose validation above.
                     var qDelta = math.normalize(math.mul(math.inverse(anchorBWorld.rot), anchorAWorld.rot));
-                    ((Quaternion)qDelta).ToAngleAxis(out var currentAngle, out var axis);
+                    ((Quaternion)qDelta).ToAngleAxis(out float currentAngle, out var axis);
                     // account for flip of axis in ToAngleAxis calculation
                     currentAngle *= axis[constrainedAxisIndex];
                     currentAngle = math.radians(currentAngle);
-                    var deltaAngle = currentAngle - targetAngle;
-                    var deltaAngleCos = math.cos(deltaAngle);
+                    float deltaAngle = currentAngle - targetAngle;
+                    float deltaAngleCos = math.cos(deltaAngle);
                     // Note: below we exclude compliant joints, since these won't be able to reach their targets with reasonable accuracy in the general case.
-                    var compliantJoint = motorConstraint.SpringFrequency < 1e3;
+                    bool compliantJoint = motorConstraint.SpringFrequency < 1e3;
                     if (deltaAngleCos < OrientationErrorTolCos && !compliantJoint)
                     {
                         Errors.Add($"Validation (RotationalMotor): angle between anchor frames differs from target angle {targetAngle} radians by {deltaAngle} radians, which exceeds the orientation error tolerance of {OrientationErrorTol} radians.");
@@ -397,10 +399,10 @@ namespace Unity.Physics.Tests
                     var motorConstraint = joint[0];
                     ValidateConstraintType(motorConstraint, ConstraintType.PositionMotor);
                     int constrainedAxisIndex = motorConstraint.ConstrainedAxis1D;
-                    var targetCoordinate = motorConstraint.Target[constrainedAxisIndex];
+                    float targetCoordinate = motorConstraint.Target[constrainedAxisIndex];
                     var prismaticAxis = new float3x3(anchorAWorld.rot)[constrainedAxisIndex];
                     var targetAnchorPosA = prismaticAxis * targetCoordinate + anchorBWorld.pos;
-                    var error = math.lengthsq(targetAnchorPosA - anchorAWorld.pos);
+                    float error = math.lengthsq(targetAnchorPosA - anchorAWorld.pos);
                     if (error > PositionErrorTolSq)
                     {
                         Errors.Add($"Validation (PositionalMotor): joint anchor lies {math.sqrt(error)} meters from target position, which exceeds position error tolerance of {PositionErrorTol} meters.");
@@ -426,8 +428,8 @@ namespace Unity.Physics.Tests
         [GenerateTestsForBurstCompatibility]
         void Execute(Entity entity, ref LocalTransform transform, ref PhysicsVelocity pv, ref PhysicsMass pm)
         {
-            var vSq = math.lengthsq(pv.Linear);
-            var wSq = math.lengthsq(pv.Angular);
+            float vSq = math.lengthsq(pv.Linear);
+            float wSq = math.lengthsq(pv.Angular);
             bool linVelAtRest = vSq <= MaxLinVelSq;
             bool angVelAtRest = wSq <= MaxAngVelSq;
             if (!linVelAtRest || !angVelAtRest)
@@ -512,14 +514,14 @@ namespace Unity.Physics.Tests
             // else:
 
             // check if any error has been detected in the validation jobs scheduled last frame (see below)
-            var numErrorsDetectedLastFrame = Errors.GetCount();
+            int numErrorsDetectedLastFrame = Errors.GetCount();
             // reset the error counter for the upcoming validation jobs
             Errors.Reset();
 
             // Note: we need to calculate our own elapsed time since the first update of this system has occurred. This is because during SubScene streaming with closed SubScenes
             // the systems in the SubScenes are not immediately created and stepped. They might get stepped only after a few frames delay. Therefore, some time might already have
             // passed (i.e., SystemAPI.Time.ElapsedTime > 0) the first time this system is updated.
-            var elapsedTime = ElapsedTime;
+            float elapsedTime = ElapsedTime;
             ElapsedTime += SystemAPI.Time.DeltaTime;
             if (settings.ValidationTimeRange[0] <= elapsedTime && (elapsedTime <= settings.ValidationTimeRange[1] || settings.ValidationTimeRange[1] < 0))
             {

@@ -26,7 +26,7 @@ namespace Code.CodeMonkey_EcsTutorial.RotationAndMovement.Systems
             foreach (var (localTransform, entity) in SystemAPI.Query<RefRO<LocalTransform>>()
                          .WithAll<Player>()
                          .WithEntityAccess()) {
-                var spawnedEntity = entityCommandBuffer.Instantiate(spawnCubeConfig.cubePrefabEntity);
+                var spawnedEntity = entityCommandBuffer.Instantiate(spawnCubeConfig.CubePrefabEntity);
                 entityCommandBuffer.SetComponent(spawnedEntity, new LocalTransform {
                     Position = localTransform.ValueRO.Position,
                     Rotation = quaternion.identity,

@@ -347,7 +347,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1583570260}
   m_Layer: 0
-  m_Name: StandardGameObjects_PhysX
+  m_Name: PhysX_GameObjects
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -666,7 +666,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1431402189}
+  - {fileID: 1583570260}
   - {fileID: 4454957338751983591}
   - {fileID: 1028618866}
   - {fileID: 1783480492}
-  - {fileID: 1583570260}

@@ -1,0 +1,1 @@
+﻿Don't use object.gethashcode in order to retrive entity id, it retrives the index directly

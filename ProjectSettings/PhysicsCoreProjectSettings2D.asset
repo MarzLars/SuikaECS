@@ -3,4 +3,4 @@
 --- !u!176606843 &1
 PhysicsCoreProjectSettings2D:
   m_ObjectHideFlags: 0
-  m_PhysicsCoreSettings: {fileID: 0}
+  m_PhysicsCoreSettings: {fileID: 11400000, guid: 3d141adad5a5384408e9ca858eab9422, type: 2}

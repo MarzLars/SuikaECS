@@ -30,12 +30,11 @@ namespace Suika.UI
 
         public void OnClickRestart() {
             var world = World.DefaultGameObjectInjectionWorld;
-            if (world != null && world.IsCreated) {
-                var entityManager = world.EntityManager;
-                var entity = entityManager.CreateEntity();
-                entityManager.AddComponentData(entity, new RestartClickEvent());
-                entityManager.AddComponentData(entity, new Event());
-            }
+            if (world is not { IsCreated: true }) return;
+            var entityManager = world.EntityManager;
+            var entity = entityManager.CreateEntity();
+            entityManager.AddComponentData(entity, new RestartClickEvent());
+            entityManager.AddComponentData(entity, new Event());
         }
     }
 }

@@ -1,5 +1,7 @@
 using Unity.Entities;
 
+namespace SuikaScripts
+{
 public struct SuikaItem : IComponentData
 {
     public byte Tier;
@@ -29,3 +31,5 @@ public struct BurstedBubbleStaticTag : IComponentData, IEnableableComponent
 }
 
 
+
+}

@@ -7,7 +7,6 @@ using Unity.Transforms;
 
 namespace SuikaScripts
 {
-    [BurstCompile]
     public static class DropperSpawnSequenceService
     {
         public const uint DefaultSeed = 123456789u;
@@ -20,7 +19,6 @@ namespace SuikaScripts
         const uint SeedWeight = 31u;
         const uint SpawnIndexWeight = 17u;
 
-        [BurstCompile]
         public static byte GetTier(uint seed, int spawnIndex)
         {
             uint safeSeed = seed == 0 ? 
@@ -33,13 +31,11 @@ namespace SuikaScripts
             return (byte)(MinTier + (mixed % range));
         }
 
-        [BurstCompile]
         public static byte PromoteTier(byte tier, byte maxTier)
         {
             return (byte)math.min(tier + 1, maxTier);
         }
 
-        [BurstCompile]
         public static float GetScale(byte tier)
         {
             return tier switch
@@ -49,12 +45,39 @@ namespace SuikaScripts
                 _ => 0.25f
             };
         }
+
+        public static bool TryGetTierDefinition(DynamicBuffer<SuikaPrefabTierBuffer> tierBuffer, byte tier, out SuikaPrefabTierBuffer tierDefinition)
+        {
+            for (int i = 0; i < tierBuffer.Length; i++) {
+                if (tierBuffer[i].Tier != tier) continue;
+                tierDefinition = tierBuffer[i];
+                return true;
+            }
+
+            tierDefinition = default;
+            return false;
+        }
+
+        public static bool TryGetFirstSphereDefinition(DynamicBuffer<SuikaPrefabTierBuffer> tierBuffer, out SuikaPrefabTierBuffer tierDefinition)
+        {
+            for (int i = 0; i < tierBuffer.Length; i++) {
+                if (tierBuffer[i].Shape != SphereShape) continue;
+                tierDefinition = tierBuffer[i];
+                return true;
+            }
+
+            tierDefinition = default;
+            return false;
+        }
     }
 
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [BurstCompile]
     public partial struct DropperSpawnSystem : ISystem
     {
+        BufferLookup<SuikaPrefabTierBuffer> _tierBufferLookup;
+        ComponentLookup<DropperSpawnPoint> _spawnPointLookup;
+
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
@@ -62,78 +85,103 @@ namespace SuikaScripts
             state.RequireForUpdate<SuikaPrefabTierBuffer>();
             state.RequireForUpdate<DropperSpawnPoint>();
             state.RequireForUpdate<BeginSimulationEntityCommandBufferSystem.Singleton>();
+
+            _tierBufferLookup = state.GetBufferLookup<SuikaPrefabTierBuffer>(true);
+            _spawnPointLookup = state.GetComponentLookup<DropperSpawnPoint>(true);
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            var deltaTime = SystemAPI.Time.DeltaTime;
+            float deltaTime = SystemAPI.Time.DeltaTime;
             var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
             var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
-            // Handle stress test auto-spawning
-            foreach (var (stressConfig, dropperEntity) in 
-                     SystemAPI.Query<RefRW<DropperStressTestConfig>>()
-                         .WithEntityAccess())
-            {
-                if (stressConfig.ValueRO.Enabled == 0)
-                    continue;
+            // 1. Update lookups and get config.
+            _tierBufferLookup.Update(ref state);
+            _spawnPointLookup.Update(ref state);
+            var config = SystemAPI.GetSingletonRW<SuikaGameConfig>();
 
-                stressConfig.ValueRW.TimeSinceLastSpawnSeconds += deltaTime;
-                if (stressConfig.ValueRO.TimeSinceLastSpawnSeconds >= stressConfig.ValueRO.SpawnIntervalSeconds)
+            // 2. Collect and count all spawn requests on the main thread.
+            var requests = new NativeList<Entity>(Allocator.Temp);
+            int totalSpawnCount = 0;
+            foreach (var (request, requestEntity) in SystemAPI.Query<DropperInitialSpawnRequest>().WithEntityAccess())
+            {
+                totalSpawnCount += math.max(0, request.Count);
+                requests.Add(requestEntity);
+            }
+
+            // 3. Consume all requests on the main thread BEFORE scheduling any jobs.
+            foreach (var entity in requests)
+            {
+                ecb.RemoveComponent<DropperInitialSpawnRequest>(entity);
+            }
+
+            // 4. Create single parallel writer for all subsequent jobs.
+            var parallelEcb = ecb.AsParallelWriter();
+
+            // 5. Consolidated spawning job if there's work to do.
+            if (totalSpawnCount > 0 && 
+                SystemAPI.TryGetSingletonEntity<SuikaGameConfig>(out var configEntity) &&
+                SystemAPI.TryGetSingletonEntity<DropperSpawnPoint>(out var dropperSpawnEntity))
+            {
+                var dropperPosition = _spawnPointLookup[dropperSpawnEntity].Position;
+                int startSpawnIndex = config.ValueRO.NextSpawnIndex;
+                uint seed = config.ValueRO.Seed;
+
+                // Reserve indices on main thread to maintain determinism.
+                config.ValueRW.NextSpawnIndex += totalSpawnCount;
+
+                state.Dependency = new DropperSpawnParallelJob
                 {
-                    stressConfig.ValueRW.TimeSinceLastSpawnSeconds = 0f;
-                    ecb.AddComponent(dropperEntity, new DropperInitialSpawnRequest
+                    ECB = parallelEcb,
+                    TierBufferLookup = _tierBufferLookup,
+                    ConfigEntity = configEntity,
+                    DropperPosition = dropperPosition,
+                    Seed = seed,
+                    StartSpawnIndex = startSpawnIndex
+                }.Schedule(totalSpawnCount, 64, state.Dependency);
+            }
+
+            // 6. Handle stress test auto-spawning (chained correctly).
+            state.Dependency = new DropperStressTestJob
+            {
+                DeltaTime = deltaTime,
+                ECB = parallelEcb,
+                SortKeyOffset = totalSpawnCount
+            }.ScheduleParallel(state.Dependency);
+        }
+
+        [BurstCompile]
+        public partial struct DropperStressTestJob : IJobEntity
+        {
+            public float DeltaTime;
+            public EntityCommandBuffer.ParallelWriter ECB;
+            public int SortKeyOffset;
+
+            public void Execute(Entity entity, [EntityIndexInQuery] int entityInQueryIndex, ref DropperStressTestConfig stressConfig)
+            {
+                if (stressConfig.Enabled == 0)
+                    return;
+
+                stressConfig.TimeSinceLastSpawnSeconds += DeltaTime;
+                if (stressConfig.TimeSinceLastSpawnSeconds >= stressConfig.SpawnIntervalSeconds)
+                {
+                    stressConfig.TimeSinceLastSpawnSeconds = 0f;
+                    ECB.AddComponent(SortKeyOffset + entityInQueryIndex, entity, new DropperInitialSpawnRequest
                     {
-                        Count = stressConfig.ValueRO.SpawnCountPerInterval
+                        Count = stressConfig.SpawnCountPerInterval
                     });
                 }
             }
-
-            // Handle manual spawn requests
-            if (!SystemAPI.TryGetSingletonEntity<DropperInitialSpawnRequest>(out var requestEntity))
-                return;
-
-            var request = SystemAPI.GetComponent<DropperInitialSpawnRequest>(requestEntity);
-            int spawnCount = math.max(0, request.Count);
-
-            // Consume the request this frame; spawning work records into the same ECB afterwards.
-            ecb.RemoveComponent<DropperInitialSpawnRequest>(requestEntity);
-
-            if (spawnCount == 0)
-            {
-                return;
-            }
-
-            if (!SystemAPI.TryGetSingletonEntity<SuikaGameConfig>(out var configEntity))
-                return;
-            var config = SystemAPI.GetSingletonRW<SuikaGameConfig>();
-            if (!SystemAPI.TryGetSingletonEntity<DropperSpawnPoint>(out var dropperSpawnEntity))
-                return;
-            var dropperPosition = SystemAPI.GetComponent<DropperSpawnPoint>(dropperSpawnEntity).Position;
-            var tierBuffer = SystemAPI.GetBuffer<SuikaPrefabTierBuffer>(configEntity);
-
-            int startSpawnIndex = config.ValueRO.NextSpawnIndex;
-            uint seed = config.ValueRO.Seed;
-
-            // Reserve indices on main thread to maintain determinism for potential concurrent requests
-            config.ValueRW.NextSpawnIndex += spawnCount;
-
-            state.Dependency = new DropperSpawnParallelJob
-            {
-                ECB = ecb.AsParallelWriter(),
-                TierBuffer = tierBuffer,
-                DropperPosition = dropperPosition,
-                Seed = seed,
-                StartSpawnIndex = startSpawnIndex
-            }.Schedule(spawnCount, 64, state.Dependency);
         }
 
         [BurstCompile]
         public struct DropperSpawnParallelJob : IJobParallelFor
         {
             public EntityCommandBuffer.ParallelWriter ECB;
-            [ReadOnly] public DynamicBuffer<SuikaPrefabTierBuffer> TierBuffer;
+            [ReadOnly] public BufferLookup<SuikaPrefabTierBuffer> TierBufferLookup;
+            public Entity ConfigEntity;
             public float3 DropperPosition;
             public uint Seed;
             public int StartSpawnIndex;
@@ -145,7 +193,10 @@ namespace SuikaScripts
                 float sphereScale = DropperSpawnSequenceService.GetScale(tier);
                 float cylinderScaleXY = 1f;
 
-                if (!TryGetTierDefinition(TierBuffer, tier, out var tierDefinition))
+                if (!TierBufferLookup.TryGetBuffer(ConfigEntity, out var tierBuffer))
+                    return;
+
+                if (!DropperSpawnSequenceService.TryGetTierDefinition(tierBuffer, tier, out var tierDefinition))
                 {
                     return;
                 }
@@ -194,21 +245,6 @@ namespace SuikaScripts
                     SpawnIndex = currentSpawnIndex,
                     CanMerge = 1
                 });
-            }
-
-            static bool TryGetTierDefinition(DynamicBuffer<SuikaPrefabTierBuffer> tierBuffer, byte tier, out SuikaPrefabTierBuffer tierDefinition)
-            {
-                for (int i = 0; i < tierBuffer.Length; i++)
-                {
-                    if (tierBuffer[i].Tier == tier)
-                    {
-                        tierDefinition = tierBuffer[i];
-                        return true;
-                    }
-                }
-
-                tierDefinition = default;
-                return false;
             }
         }
 

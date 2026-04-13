@@ -1,6 +1,4 @@
 using Unity.Entities;
-using Unity.Mathematics;
-using UnityEngine;
 
 namespace Suika.UI
 {
@@ -20,6 +18,11 @@ namespace Suika.UI
     public struct SuikaGameState : IComponentData
     {
         public GameState State;
+    }
+
+    public struct ScoreEvent : IComponentData
+    {
+        public int Amount;
     }
 
     public struct SuikaScore : IComponentData

@@ -14,14 +14,6 @@ namespace SuikaScripts
     [BurstCompile]
     public partial struct SuikaMergeSystem : ISystem
     {
-        ComponentLookup<SuikaItem> _itemLookup;
-        ComponentLookup<BurstedBubbleStaticTag> _staticTagLookup;
-        ComponentLookup<LocalTransform> _transformLookup;
-        ComponentLookup<PhysicsCollider> _colliderLookup;
-        ComponentLookup<Suika.UI.SuikaScore> _scoreLookup;
-        BufferLookup<SuikaPrefabTierBuffer> _tierBufferLookup;
-        BufferLookup<SuikaBurstConfigBuffer> _burstBufferLookup;
-
         public struct MergeEvent
         {
             public Entity EntityA;
@@ -71,14 +63,6 @@ namespace SuikaScripts
             state.RequireForUpdate<SimulationSingleton>();
             state.RequireForUpdate<EndFixedStepSimulationEntityCommandBufferSystem.Singleton>();
             state.RequireForUpdate<DropperSpawnPoint>();
-
-            _itemLookup = state.GetComponentLookup<SuikaItem>(isReadOnly: false);
-            _staticTagLookup = state.GetComponentLookup<BurstedBubbleStaticTag>(true);
-            _transformLookup = state.GetComponentLookup<LocalTransform>(true);
-            _colliderLookup = state.GetComponentLookup<PhysicsCollider>(true);
-            _scoreLookup = state.GetComponentLookup<Suika.UI.SuikaScore>(isReadOnly: false);
-            _tierBufferLookup = state.GetBufferLookup<SuikaPrefabTierBuffer>(true);
-            _burstBufferLookup = state.GetBufferLookup<SuikaBurstConfigBuffer>(true);
         }
 
         [BurstCompile]
@@ -98,19 +82,17 @@ namespace SuikaScripts
             if (!SystemAPI.TryGetSingletonEntity<SuikaGameConfig>(out var configEntity))
                 return;
             
-            _itemLookup.Update(ref state);
-            _staticTagLookup.Update(ref state);
-            _transformLookup.Update(ref state);
-            _colliderLookup.Update(ref state);
-            _scoreLookup.Update(ref state);
-            _tierBufferLookup.Update(ref state);
-            _burstBufferLookup.Update(ref state);
+            var itemLookup = SystemAPI.GetComponentLookup<SuikaItem>();
+            var staticTagLookup = SystemAPI.GetComponentLookup<BurstedBubbleStaticTag>(true);
+            var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+            var tierBufferLookup = SystemAPI.GetBufferLookup<SuikaPrefabTierBuffer>(true);
+            var burstBufferLookup = SystemAPI.GetBufferLookup<SuikaBurstConfigBuffer>(true);
 
             var mergeQueue = new NativeQueue<MergeEvent>(Allocator.TempJob);
             var collisionJob = new MergeCollisionJob
             {
-                ItemLookup = _itemLookup,
-                StaticTagLookup = _staticTagLookup,
+                ItemLookup = itemLookup,
+                StaticTagLookup = staticTagLookup,
                 MergeQueue = mergeQueue.AsParallelWriter()
             };
 
@@ -120,11 +102,10 @@ namespace SuikaScripts
             {
                 ECB = entityCommandBuffer.AsParallelWriter(),
                 MergeQueue = mergeQueue,
-                ItemLookup = _itemLookup,
-                TransformLookup = _transformLookup,
-                ScoreLookup = _scoreLookup,
-                TierBufferLookup = _tierBufferLookup,
-                BurstBufferLookup = _burstBufferLookup,
+                ItemLookup = itemLookup,
+                TransformLookup = transformLookup,
+                TierBufferLookup = tierBufferLookup,
+                BurstBufferLookup = burstBufferLookup,
                 ConfigEntity = configEntity
             };
 
@@ -139,7 +120,6 @@ namespace SuikaScripts
             public NativeQueue<MergeEvent> MergeQueue;
             public ComponentLookup<SuikaItem> ItemLookup;
             [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
-            public ComponentLookup<Suika.UI.SuikaScore> ScoreLookup;
             [ReadOnly] public BufferLookup<SuikaPrefabTierBuffer> TierBufferLookup;
             [ReadOnly] public BufferLookup<SuikaBurstConfigBuffer> BurstBufferLookup;
             public Entity ConfigEntity;
@@ -179,7 +159,7 @@ namespace SuikaScripts
                     var victimTransform = TransformLookup[mergeEvent.EntityB];
                     var mergedPosition = (survivorTransform.Position + victimTransform.Position) * 0.5f;
 
-                    if (!TryGetTierDefinition(tierBuffer, first.Tier, out var currentTierDefinition))
+                    if (!DropperSpawnSequenceService.TryGetTierDefinition(tierBuffer, first.Tier, out var currentTierDefinition))
                         continue;
 
                     if (currentTierDefinition.Shape != first.Shape)
@@ -189,12 +169,7 @@ namespace SuikaScripts
 
                     if (shouldBurst)
                     {
-                        if (ScoreLookup.HasComponent(ConfigEntity))
-                        {
-                            var score = ScoreLookup[ConfigEntity];
-                            score.Value += currentTierDefinition.ScoreValue;
-                            ScoreLookup[ConfigEntity] = score;
-                        }
+                        ECB.AddComponent(0, ECB.CreateEntity(0), new Suika.UI.ScoreEvent { Amount = currentTierDefinition.ScoreValue });
 
                         if (!TryGetBurstConfig(burstBuffer, currentTierDefinition.BurstConfigIndex, out var selectedBurstConfig))
                             continue;
@@ -246,18 +221,13 @@ namespace SuikaScripts
                         nextTier = DropperSpawnSequenceService.PromoteTier(first.Tier, DropperSpawnSequenceService.CylinderMaxTier);
                     }
 
-                    if (!TryGetTierDefinition(tierBuffer, nextTier, out var nextTierDefinition))
+                    if (!DropperSpawnSequenceService.TryGetTierDefinition(tierBuffer, nextTier, out var nextTierDefinition))
                         continue;
 
                     if (nextTierDefinition.Shape != nextShape)
                         continue;
 
-                    if (ScoreLookup.HasComponent(ConfigEntity))
-                    {
-                        var score = ScoreLookup[ConfigEntity];
-                        score.Value += nextTierDefinition.ScoreValue;
-                        ScoreLookup[ConfigEntity] = score;
-                    }
+                    ECB.AddComponent(0, ECB.CreateEntity(0), new Suika.UI.ScoreEvent { Amount = nextTierDefinition.ScoreValue });
 
                     var resultPrefab = nextTierDefinition.PrefabEntity;
                     if (resultPrefab == Entity.Null)
@@ -323,6 +293,7 @@ namespace SuikaScripts
                 consumed.Dispose();
             }
 
+            //Bubble burst logic
             static bool TrySpawnMaxTierBurst(
                 EntityCommandBuffer.ParallelWriter entityCommandBuffer,
                 DynamicBuffer<SuikaPrefabTierBuffer> tierBuffer,
@@ -346,7 +317,7 @@ namespace SuikaScripts
                 float4 burstColor = currentTierDefinition.Color;
 
                 if ((burstPrefab == Entity.Null || currentTierDefinition.Shape != DropperSpawnSequenceService.SphereShape) &&
-                    TryGetFirstSphereDefinition(tierBuffer, out var sphereTierDefinition))
+                    DropperSpawnSequenceService.TryGetFirstSphereDefinition(tierBuffer, out var sphereTierDefinition))
                 {
                     if (burstPrefab == Entity.Null)
                         burstPrefab = sphereTierDefinition.PrefabEntity;
@@ -388,21 +359,24 @@ namespace SuikaScripts
                         quaternion.identity,
                         burstScale));
                     entityCommandBuffer.RemoveComponent<PostTransformMatrix>(0, burstEntity);
-                    entityCommandBuffer.SetComponent(0, burstEntity, new SuikaItem
+                    
+                    // Use AddComponent instead of SetComponent to ensure they exist on the entity instance
+                    entityCommandBuffer.AddComponent(0, burstEntity, new SuikaItem
                     {
                         Tier = burstTier,
                         Shape = DropperSpawnSequenceService.SphereShape,
                         SpawnIndex = baseSpawnIndex + i,
                         CanMerge = 0
                     });
-                    entityCommandBuffer.SetComponent(0, burstEntity, new BurstedBubbleSleepTimer
+                    
+                    entityCommandBuffer.AddComponent(0, burstEntity, new BurstedBubbleSleepTimer
                     {
                         SecondsRemaining = burstConfig.SleepDelaySeconds,
                         IsSleeping = 0
                     });
                     entityCommandBuffer.SetComponentEnabled<BurstedBubbleSleepTimer>(0, burstEntity, true);
 
-                    entityCommandBuffer.SetComponent(0, burstEntity, new BurstedBubbleStaticTag());
+                    entityCommandBuffer.AddComponent(0, burstEntity, new BurstedBubbleStaticTag());
                     entityCommandBuffer.SetComponentEnabled<BurstedBubbleStaticTag>(0, burstEntity, false);
                 }
 
@@ -419,36 +393,6 @@ namespace SuikaScripts
 
                 burstConfig = burstBuffer[index];
                 return true;
-            }
-
-            static bool TryGetFirstSphereDefinition(DynamicBuffer<SuikaPrefabTierBuffer> tierBuffer, out SuikaPrefabTierBuffer tierDefinition)
-            {
-                for (int i = 0; i < tierBuffer.Length; i++)
-                {
-                    if (tierBuffer[i].Shape == DropperSpawnSequenceService.SphereShape)
-                    {
-                        tierDefinition = tierBuffer[i];
-                        return true;
-                    }
-                }
-
-                tierDefinition = default;
-                return false;
-            }
-
-            static bool TryGetTierDefinition(DynamicBuffer<SuikaPrefabTierBuffer> tierBuffer, byte tier, out SuikaPrefabTierBuffer tierDefinition)
-            {
-                for (int i = 0; i < tierBuffer.Length; i++)
-                {
-                    if (tierBuffer[i].Tier == tier)
-                    {
-                        tierDefinition = tierBuffer[i];
-                        return true;
-                    }
-                }
-
-                tierDefinition = default;
-                return false;
             }
         }
     }

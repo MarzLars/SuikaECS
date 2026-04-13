@@ -1,4 +1,3 @@
-using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -26,7 +25,7 @@ namespace Suika.UI
     internal sealed class SuikaPanelRoot : MonoBehaviour
     {
         public VisualElement RootElement { get; private set; }
-        private PanelRenderer _panelRenderer;
+        PanelRenderer _panelRenderer;
 
         void OnEnable() {
             _panelRenderer = GetComponent<PanelRenderer>();
@@ -52,10 +51,12 @@ namespace Suika.UI
     public partial struct SuikaUISystem : ISystem
     {
         public void OnCreate(ref SystemState state) {
+            state.RequireForUpdate<BeginPresentationEntityCommandBufferSystem.Singleton>();
             state.RequireForUpdate<SuikaGameState>();
         }
 
         public void OnUpdate(ref SystemState state) {
+            var ecb = SystemAPI.GetSingleton<BeginPresentationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
             var gameState = SystemAPI.GetSingletonRW<SuikaGameState>();
             
             // Initialization
@@ -87,14 +88,25 @@ namespace Suika.UI
 
             if (!SystemAPI.TryGetSingleton<UIScreens>(out var screensData)) return;
 
-            // Handle Click Events
-            var entitiesToDestroy = new NativeList<Entity>(Allocator.Temp);
+            // 1. Process Score Events
+            int totalGain = 0;
+            foreach (var (scoreEvent, entity) in SystemAPI.Query<ScoreEvent>().WithEntityAccess())
+            {
+                totalGain += scoreEvent.Amount;
+                ecb.DestroyEntity(entity);
+            }
 
+            if (totalGain > 0 && SystemAPI.TryGetSingletonRW<SuikaScore>(out var score))
+            {
+                score.ValueRW.Value += totalGain;
+            }
+
+            // Handle Click Events
             foreach (var (_, entity) in SystemAPI.Query<PlayClickEvent>().WithEntityAccess()) {
                 gameState.ValueRW.State = GameState.Playing;
                 screensData.StartScreen.Value.Hide();
                 screensData.HUDScreen.Value.Show();
-                entitiesToDestroy.Add(entity);
+                ecb.DestroyEntity(entity);
             }
 
             foreach (var (_, entity) in SystemAPI.Query<RestartClickEvent>().WithEntityAccess()) {
@@ -107,14 +119,8 @@ namespace Suika.UI
                     SystemAPI.GetSingletonRW<SuikaScore>().ValueRW.Value = 0;
                 }
 
-                entitiesToDestroy.Add(entity);
+                ecb.DestroyEntity(entity);
             }
-
-            for (int i = 0; i < entitiesToDestroy.Length; i++) {
-                state.EntityManager.DestroyEntity(entitiesToDestroy[i]);
-            }
-
-            entitiesToDestroy.Dispose();
 
             // Update Score in HUD
             if (SystemAPI.TryGetSingleton<SuikaScore>(out var scoreData)) {

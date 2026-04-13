@@ -1,7 +1,9 @@
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Rendering;
 
-
+namespace SuikaScripts
+{
 public struct SuikaGameConfig : IComponentData
 {
     public uint Seed;
@@ -26,23 +28,10 @@ public struct SuikaBurstConfigBuffer : IBufferElementData
     };
 }
 
-[Unity.Rendering.MaterialProperty("_BaseColor")]
+[MaterialProperty("_BaseColor")]
 public struct SuikaColorOverride : IComponentData
 {
     public float4 Value;
-}
-
-/// <summary>
-/// Stores per-tier prefab entities and their metadata.
-/// Tier is determined by the index (0-based).
-/// </summary>
-public struct SuikaPrefabTierData : IComponentData
-{
-    public byte Tier;
-    public byte Shape;
-    public Entity PrefabEntity;
-    public float Scale;
-    public int ScoreValue;
 }
 
 /// <summary>
@@ -81,3 +70,5 @@ public struct DropperStressTestConfig : IComponentData
 }
 
 
+
+}

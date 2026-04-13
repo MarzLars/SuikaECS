@@ -381,7 +381,7 @@ MonoBehaviour:
   m_MultiThreaded: 1
   m_CollisionTolerance: 0.001
   m_SynchronizeCollisionWorld: 0
-  m_IncrementalDynamicBroadphase: 0
+  m_IncrementalDynamicBroadphase: 1
   m_IncrementalStaticBroadphase: 1
   m_MaxDynamicDepenetrationVelocity: 3
   m_MaxStaticDepenetrationVelocity: 3

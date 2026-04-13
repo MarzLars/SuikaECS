@@ -23,14 +23,14 @@ namespace SuikaScripts
         {
             var ecbSingleton = SystemAPI.GetSingleton<EndFixedStepSimulationEntityCommandBufferSystem.Singleton>();
             var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter();
-            var deltaTime = SystemAPI.Time.DeltaTime;
+            float deltaTime = SystemAPI.Time.DeltaTime;
 
             // Transitioning entities to static by removing velocity/mass components.
-            new BurstedBubbleSleepJob
+            state.Dependency = new BurstedBubbleSleepJob
             {
                 DeltaTime = deltaTime,
                 ECB = ecb
-            }.ScheduleParallel();
+            }.ScheduleParallel(state.Dependency);
         }
 
         [BurstCompile]

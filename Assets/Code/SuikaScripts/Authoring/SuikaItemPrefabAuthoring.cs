@@ -43,7 +43,9 @@ namespace SuikaScripts
                     Tier = (byte)clampedTier,
                     Shape = shape,
                     SpawnIndex = -1,
-                    CanMerge = authoring.canMerge ? (byte)1 : (byte)0
+                    CanMerge = authoring.canMerge ? 
+                        (byte)1 :
+                        (byte)0
                 });
 
                 AddComponent(entity, new SuikaColorOverride

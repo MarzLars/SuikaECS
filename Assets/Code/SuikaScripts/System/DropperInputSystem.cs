@@ -1,7 +1,8 @@
-﻿using SuikaScripts;
-using Unity.Entities;
+﻿using Unity.Entities;
 using UnityEngine.InputSystem;
 
+namespace SuikaScripts
+{
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateBefore(typeof(DropperSpawnSystem))]
 public partial struct DropperInputSystem : ISystem
@@ -15,7 +16,8 @@ public partial struct DropperInputSystem : ISystem
     {
         bool clicked = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
         bool pressed = Keyboard.current != null && 
-                       (Keyboard.current.spaceKey.wasPressedThisFrame || Keyboard.current.enterKey.wasPressedThisFrame);
+                       (Keyboard.current.spaceKey.wasPressedThisFrame || 
+                        Keyboard.current.enterKey.wasPressedThisFrame);
 
         if (!clicked && !pressed)
             return;
@@ -28,4 +30,5 @@ public partial struct DropperInputSystem : ISystem
             Count = 1
         });
     }
+}
 }

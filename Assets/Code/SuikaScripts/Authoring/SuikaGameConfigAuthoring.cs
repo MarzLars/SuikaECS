@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -14,14 +13,7 @@ namespace SuikaScripts
         [Header("Deterministic seed")]
         [Tooltip("Used for spawn sequence randomization")]
         public uint seed = DropperSpawnSequenceService.DefaultSeed;
-
-        void OnValidate()
-        {
-            if (configData is null)
-            {
-                SuikaLog.Warning("SuikaGameConfigAuthoring: Assign a SuikaGameConfigData asset.", this);
-            }
-        }
+        
 
         class SuikaGameConfigBaker : Baker<SuikaGameConfigAuthoring>
         {
@@ -103,16 +95,6 @@ namespace SuikaScripts
                 // Initialize UI State components
                 AddComponent(entity, new Suika.UI.SuikaGameState { State = Suika.UI.GameState.Init });
                 AddComponent(entity, new Suika.UI.SuikaScore { Value = 0 });
-            }
-        }
-
-        // Conditional logging helper. Calls stripped from non-editor/release builds.
-        static class SuikaLog
-        {
-            [Conditional("UNITY_EDITOR")]
-            public static void Warning(string message, Object context = null)
-            {
-                UnityEngine.Debug.LogWarning(message, context);
             }
         }
     }

@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8487a6e9a0b9497192ca048133c7a9ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Unity.DotsUISample.SuikaItemAuthoring
-  StressTestEnabled: 0
+  StressTestEnabled: 1
   StressTestSpawnIntervalSeconds: 0.001
   StressTestSpawnCountPerInterval: 10
 --- !u!114 &99471212
@@ -382,7 +382,7 @@ MonoBehaviour:
   m_CollisionTolerance: 0.001
   m_SynchronizeCollisionWorld: 0
   m_IncrementalDynamicBroadphase: 0
-  m_IncrementalStaticBroadphase: 0
+  m_IncrementalStaticBroadphase: 1
   m_MaxDynamicDepenetrationVelocity: 3
   m_MaxStaticDepenetrationVelocity: 3
 --- !u!1001 &988747790

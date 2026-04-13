@@ -1,0 +1,30 @@
+using Unity.Entities;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace Suika.UI
+{
+    // Base class for the Suika UI elements
+    // Inherits from ScriptableObject so that the instances can be stored in a UnityObjectRef
+    public abstract class UIScreen : ScriptableObject
+    {
+        public const string k_VisibleClass = "screen-visible";
+        public const string k_HiddenClass = "screen-hidden";
+
+        public VisualElement RootElement { get; set; }
+
+        public void Show() {
+            RootElement.AddToClassList(k_VisibleClass);
+            RootElement.BringToFront();
+            RootElement.RemoveFromClassList(k_HiddenClass);
+            RootElement.SetEnabled(true);
+            RootElement.style.display = DisplayStyle.Flex;
+        }
+
+        public void Hide() {
+            RootElement.AddToClassList(k_HiddenClass);
+            RootElement.RemoveFromClassList(k_VisibleClass);
+            RootElement.style.display = DisplayStyle.None;
+        }
+    }
+}

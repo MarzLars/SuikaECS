@@ -93,7 +93,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000002, guid: 9a7cf414a8d7fa543aaea5926406ded5, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -164,6 +164,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8487a6e9a0b9497192ca048133c7a9ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Unity.DotsUISample.SuikaItemAuthoring
+  StressTestEnabled: 0
+  StressTestSpawnIntervalSeconds: 0.001
+  StressTestSpawnCountPerInterval: 10
 --- !u!114 &99471212
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -176,14 +179,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a9453699aca4993aee93e0a4e92681f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Unity.DotsUISample.SuikaGameConfigAuthoring
+  configData: {fileID: 11400000, guid: a75f17d12f0afdb438c2e44d8a7de7a8, type: 2}
   seed: 123456789
-  sphere0Prefab: {fileID: 3600390234102254887, guid: 43bfedfa769fc5a44a523975d42b8f7c, type: 3}
-  sphere1Prefab: {fileID: 3600390234102254887, guid: 130126c5858bb254cba8f3a37a073581, type: 3}
-  sphere2Prefab: {fileID: 3600390234102254887, guid: ebc8cfd60e1b8534b842b35497bfaff1, type: 3}
-  cylinder3Prefab: {fileID: 6209896547553138270, guid: 4c3d6870d6c64dc498a9338e8ff8d9f6, type: 3}
-  cylinder4Prefab: {fileID: 6209896547553138270, guid: 69972a802a6e72b4ab3953fb392e09b0, type: 3}
-  cylinder5Prefab: {fileID: 6209896547553138270, guid: b385eab8ad7a62a4f8c105427bdf4f4b, type: 3}
-  initialSpawnCount: 1
 --- !u!1001 &128897042
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -244,11 +241,56 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3488534028362020625, guid: 130126c5858bb254cba8f3a37a073581, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 130126c5858bb254cba8f3a37a073581, type: 3}
+--- !u!1 &399107787
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 399107789}
+  - component: {fileID: 399107788}
+  m_Layer: 0
+  m_Name: Velocity Clipping
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &399107788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 399107787}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 110c60cf8debd0e43b930ac41e50e3b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Code.SuikaScripts.VelocityClipping
+--- !u!4 &399107789
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 399107787}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &461941792
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,11 +322,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Physics.Hybrid::Unity.Physics.Authoring.PhysicsDebugDisplayAuthoring
   DrawColliders: 0
-  DrawColliderEdges: 1
+  DrawColliderEdges: 0
   DrawColliderAabbs: 0
   DrawMassProperties: 0
   DrawBroadphase: 0
-  DrawContacts: 1
+  DrawContacts: 0
   DrawCollisionEvents: 0
   DrawTriggerEvents: 0
   DrawJoints: 0
@@ -335,14 +377,14 @@ MonoBehaviour:
     m_MaximumJointStiffness: 100000
     m_MaximumJointDamping: 10000
     m_MinimumMotorSlip: 0.0001
-  m_EnableSolverStabilizationHeuristic: 1
+  m_EnableSolverStabilizationHeuristic: 0
   m_MultiThreaded: 1
-  m_CollisionTolerance: 0.01
+  m_CollisionTolerance: 0.001
   m_SynchronizeCollisionWorld: 0
   m_IncrementalDynamicBroadphase: 0
   m_IncrementalStaticBroadphase: 0
   m_MaxDynamicDepenetrationVelocity: 3
-  m_MaxStaticDepenetrationVelocity: Infinity
+  m_MaxStaticDepenetrationVelocity: 3
 --- !u!1001 &988747790
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -403,7 +445,8 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 8672599952808730799, guid: 69972a802a6e72b4ab3953fb392e09b0, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -468,7 +511,8 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5934183418481028733, guid: b385eab8ad7a62a4f8c105427bdf4f4b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -533,7 +577,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5884496226685205574, guid: 43bfedfa769fc5a44a523975d42b8f7c, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -598,7 +643,8 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2553217134018867690, guid: 4c3d6870d6c64dc498a9338e8ff8d9f6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -663,7 +709,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 9003725152206594994, guid: ebc8cfd60e1b8534b842b35497bfaff1, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -673,6 +720,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 461941795}
+  - {fileID: 399107789}
   - {fileID: 99471210}
   - {fileID: 1900329470}
   - {fileID: 128897042}

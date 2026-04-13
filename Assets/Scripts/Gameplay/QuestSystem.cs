@@ -1,6 +1,6 @@
 using Code.InputHandling;
 using Unity.Entities;
-using Unity.Transforms;
+// using Unity.Transforms; // removed: not required in this system
 
 namespace Unity.DotsUISample
 {
@@ -20,13 +20,7 @@ namespace Unity.DotsUISample
 
             if (game.ValueRO.State != GameState.Questing) return;
 
-            var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>()
-                .CreateCommandBuffer(state.WorldUnmanaged);
 
-            var playerEntity = SystemAPI.GetSingletonEntity<Player>();
-            var playerPosition = SystemAPI.GetComponent<LocalTransform>(playerEntity).Position.xz;
-
-            const float minDistanceSq = 9f;
 
             // check for interaction with cauldron to turn in quest
             if (quest.HasAllItems)

@@ -1,0 +1,8 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="False" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <engine:VisualElement name="hud__container" picking-mode="Ignore" style="flex-grow: 1; padding: 20px; display: flex;">
+        <engine:VisualElement name="hud__score-container" style="align-items: flex-end;">
+            <engine:Label name="hud__score-label" text="Score: 0" style="font-size: 40px; color: white; -unity-font-style: bold;"/>
+        </engine:VisualElement>
+        <engine:VisualElement name="hud__next-fruit-container" style="width: 100px; height: 100px; border-width: 2px; border-color: white; margin-top: 10px; background-color: rgba(0, 0, 0, 0.5);"/>
+    </engine:VisualElement>
+</engine:UXML>

@@ -11,6 +11,22 @@ namespace Code.CodeMonkey_EcsTutorial.RotationAndMovement
             Instance = this;
         }
 
+        // Ensure Instance exists after scene load for systems/tools expecting RuntimeInitializeOnLoadMethod
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void EnsureInstanceAfterSceneLoad()
+        {
+            if (Instance != null) return;
+            var existing = Object.FindAnyObjectByType<PlayerShootManager>();
+            if (existing != null) {
+                Instance = existing;
+                return;
+            }
+
+            // create manager GameObject automatically if missing
+            var go = new GameObject("PlayerShootManager");
+            go.AddComponent<PlayerShootManager>();
+        }
+
         public void PlayerShoot(Vector3 playerPosition) {
             Instantiate(shootPopupPrefab, playerPosition, Quaternion.identity);
         }

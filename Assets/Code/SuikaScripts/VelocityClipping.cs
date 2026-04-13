@@ -1,5 +1,7 @@
 using System;
+using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -39,9 +41,12 @@ namespace Code.SuikaScripts
             }));
         }
 
+        [BurstCompile]
         struct ClipVelocitiesJob : IJob
         {
+            [NativeDisableContainerSafetyRestriction]
             public NativeArray<MotionVelocity> MotionVelocities;
+            [NativeDisableContainerSafetyRestriction]
             public NativeArray<MotionData> MotionDatas;
             public float TimeStep;
             public float3 Gravity;

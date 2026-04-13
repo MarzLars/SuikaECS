@@ -1,4 +1,6 @@
-﻿using Unity.Entities;
+﻿using System.Diagnostics;
+using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace SuikaScripts
@@ -6,40 +8,111 @@ namespace SuikaScripts
     [DisallowMultipleComponent]
     public class SuikaGameConfigAuthoring : MonoBehaviour
     {
-        [Header("Deterministic seed")] public uint seed = DropperSpawnSequenceService.DefaultSeed;
+        [Tooltip("ScriptableObject containing all prefab definitions and game config")]
+        public SuikaGameConfigData configData;
 
-        [Header("Sphere prefabs")]
-        public GameObject sphere0Prefab;
-        public GameObject sphere1Prefab;
-        public GameObject sphere2Prefab;
+        [Header("Deterministic seed")]
+        [Tooltip("Used for spawn sequence randomization")]
+        public uint seed = DropperSpawnSequenceService.DefaultSeed;
 
-        [Header("Cylinder prefabs")]
-        public GameObject cylinder3Prefab;
-        public GameObject cylinder4Prefab;
-        public GameObject cylinder5Prefab;
-
-        [Min(1)] public int initialSpawnCount = 1;
+        void OnValidate()
+        {
+            if (configData is null)
+            {
+                SuikaLog.Warning("SuikaGameConfigAuthoring: Assign a SuikaGameConfigData asset.", this);
+            }
+        }
 
         class SuikaGameConfigBaker : Baker<SuikaGameConfigAuthoring>
         {
             public override void Bake(SuikaGameConfigAuthoring authoring)
             {
+                if (!authoring.configData)
+                    return;
+
                 var entity = GetEntity(TransformUsageFlags.None);
+                BakeFromConfigData(entity, authoring);
+            }
+
+            void BakeFromConfigData(Entity entity, SuikaGameConfigAuthoring authoring)
+            {
+                var configData = authoring.configData;
+                
                 AddComponent(entity, new SuikaGameConfig
                 {
                     Seed = authoring.seed,
-                    NextSpawnIndex = 0,
-                    Sphere0PrefabEntity = GetEntity(authoring.sphere0Prefab, TransformUsageFlags.Dynamic),
-                    Sphere1PrefabEntity = GetEntity(authoring.sphere1Prefab, TransformUsageFlags.Dynamic),
-                    Sphere2PrefabEntity = GetEntity(authoring.sphere2Prefab, TransformUsageFlags.Dynamic),
-                    Cylinder3PrefabEntity = GetEntity(authoring.cylinder3Prefab, TransformUsageFlags.Dynamic),
-                    Cylinder4PrefabEntity = GetEntity(authoring.cylinder4Prefab, TransformUsageFlags.Dynamic),
-                    Cylinder5PrefabEntity = GetEntity(authoring.cylinder5Prefab, TransformUsageFlags.Dynamic)
+                    NextSpawnIndex = 0
                 });
+
+                var burstBuffer = AddBuffer<SuikaBurstConfigBuffer>(entity);
+                var burstConfigs = configData.BurstBubbleConfigs ?? System.Array.Empty<SuikaBurstConfig>();
+                for (int i = 0; i < burstConfigs.Length; i++)
+                {
+                    var burstConfig = burstConfigs[i];
+
+                    if (burstConfig is null)
+                    {
+                        // Keep index parity with authoring array so BurstBubbleConfigIndex remains stable.
+                        burstBuffer.Add(SuikaBurstConfigBuffer.Default);
+                        continue;
+                    }
+
+                    burstBuffer.Add(new SuikaBurstConfigBuffer
+                    {
+                        SphereCount = Mathf.Max(0, burstConfig.SphereCount),
+                        SpherePrefabEntity = burstConfig.SpherePrefab
+                            ? GetEntity(burstConfig.SpherePrefab, TransformUsageFlags.Dynamic)
+                            : Entity.Null,
+                        SphereSize = Mathf.Max(0.01f, burstConfig.SphereSize),
+                        Radius = Mathf.Max(0f, burstConfig.Radius),
+                        SleepDelaySeconds = Mathf.Max(0f, burstConfig.SleepDelaySeconds)
+                    });
+                }
+
+                // Create buffer with all tier definitions
+                var tierBuffer = AddBuffer<SuikaPrefabTierBuffer>(entity);
+                
+                for (byte tier = 0; tier < configData.PrefabDefinitions.Length; tier++)
+                {
+                    var prefabDef = configData.PrefabDefinitions[tier];
+                    if (!prefabDef.Prefab)
+                        continue;
+
+                    tierBuffer.Add(new SuikaPrefabTierBuffer
+                    {
+                        Tier = tier,
+                        Shape = prefabDef.Shape,
+                        PrefabEntity = GetEntity(prefabDef.Prefab, TransformUsageFlags.Dynamic),
+                        Scale = prefabDef.Scale,
+                        Color = new float4(prefabDef.Color.r, prefabDef.Color.g, prefabDef.Color.b, prefabDef.Color.a),
+                        ScoreValue = prefabDef.ScoreValue,
+                        BurstOnMerge = prefabDef.BurstOnMerge ? 
+                            (byte)1 : 
+                            (byte)0,
+                        BurstConfigIndex = prefabDef.BurstOnMerge
+                            ? Mathf.Clamp(prefabDef.BurstBubbleConfigIndex, 0, Mathf.Max(0, burstBuffer.Length - 1))
+                            : -1
+                    });
+                }
+
                 AddComponent(entity, new DropperInitialSpawnRequest
                 {
-                    Count = Mathf.Max(1, authoring.initialSpawnCount)
+                    Count = 1
                 });
+
+                // Initialize UI State components
+                AddComponent(entity, new Suika.UI.SuikaGameState { State = Suika.UI.GameState.Init });
+                AddComponent(entity, new Suika.UI.SuikaScore { Value = 0 });
+            }
+        }
+
+        // Conditional logging helper. Calls stripped from non-editor/release builds.
+        static class SuikaLog
+        {
+            [Conditional("UNITY_EDITOR")]
+            public static void Warning(string message, Object context = null)
+            {
+                UnityEngine.Debug.LogWarning(message, context);
             }
         }
     }

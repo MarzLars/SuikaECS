@@ -13,9 +13,10 @@ namespace Unity.DotsUISample
         }
 
         public void OnDestroy(ref SystemState state) {
-            var screens = SystemAPI.GetSingleton<UIScreens>();
-            var ecb = screens.HelpScreen.Value.entityCommandBuffer;
-            if (ecb.IsCreated) ecb.Dispose();
+            if (SystemAPI.TryGetSingleton<UIScreens>(out var screens)) {
+                var ecb = screens.HelpScreen.Value.entityCommandBuffer;
+                if (ecb.IsCreated) ecb.Dispose();
+            }
         }
 
         public void OnUpdate(ref SystemState state) {

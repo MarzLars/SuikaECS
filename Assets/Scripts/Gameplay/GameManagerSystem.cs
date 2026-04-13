@@ -20,12 +20,6 @@ namespace Unity.DotsUISample
         void OnEnable() {
             _panelRenderer = GetComponent<PanelRenderer>();
             _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-
-            // If the panel is already loaded when this component is added, try to grab the current root immediately.
-            var rootProperty = _panelRenderer.GetType().GetProperty("rootVisualElement")
-                               ?? _panelRenderer.GetType().GetProperty("visualTree");
-            if (rootProperty?.GetValue(_panelRenderer) is VisualElement root)
-                RootElement = root;
         }
 
         void OnDisable() {
@@ -84,8 +78,12 @@ namespace Unity.DotsUISample
 
                 var entity = state.EntityManager.CreateEntity();
                 state.EntityManager.AddComponentData(entity, screens);
+                return;
             }
-            else if (game.ValueRO.State == GameState.SplashScreen) {
+
+            if (!SystemAPI.HasSingleton<UIScreens>()) return;
+
+            if (game.ValueRO.State == GameState.SplashScreen) {
                 if (Keyboard.current.anyKey.isPressed || Mouse.current.leftButton.isPressed) {
                     var screens = SystemAPI.GetSingletonRW<UIScreens>();
                     screens.ValueRO.SplashScreen.Value.Hide();

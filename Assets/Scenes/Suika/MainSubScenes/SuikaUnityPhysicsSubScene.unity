@@ -164,9 +164,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8487a6e9a0b9497192ca048133c7a9ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Unity.DotsUISample.SuikaItemAuthoring
-  StressTestEnabled: 1
-  StressTestSpawnIntervalSeconds: 0.001
-  StressTestSpawnCountPerInterval: 10
+  StressTestEnabled: 0
+  StressTestSpawnIntervalSeconds: 1
+  StressTestSpawnCountPerInterval: 1
 --- !u!114 &99471212
 MonoBehaviour:
   m_ObjectHideFlags: 0

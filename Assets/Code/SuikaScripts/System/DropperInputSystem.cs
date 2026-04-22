@@ -1,5 +1,5 @@
 ﻿using Unity.Entities;
-using UnityEngine.InputSystem;
+using Code.InputHandling;
 
 namespace SuikaScripts
 {
@@ -10,16 +10,12 @@ public partial struct DropperInputSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<SuikaGameConfig>();
+        GameInput.Initialize();
     }
 
     public void OnUpdate(ref SystemState state)
     {
-        bool clicked = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
-        bool pressed = Keyboard.current != null && 
-                       (Keyboard.current.spaceKey.wasPressedThisFrame || 
-                        Keyboard.current.enterKey.wasPressedThisFrame);
-
-        if (!clicked && !pressed)
+        if (!GameInput.DropPressedThisFrame())
             return;
 
         var configEntity = SystemAPI.GetSingletonEntity<SuikaGameConfig>();

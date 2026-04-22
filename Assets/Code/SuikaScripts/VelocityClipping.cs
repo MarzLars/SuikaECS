@@ -4,7 +4,6 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Systems;
-using Unity.Transforms;
 using UnityEngine;
 
 namespace SuikaScripts
@@ -44,13 +43,8 @@ namespace SuikaScripts
             if (physicsStep.SimulationType != SimulationType.UnityPhysics)
                 return;
 
-            var deltaTime = SystemAPI.Time.DeltaTime;
-            var gravity = physicsStep.Gravity;
-
             state.Dependency = new ClipVelocitiesJob
             {
-                TimeStep = deltaTime,
-                Gravity = gravity,
                 GravityFactorLookup = SystemAPI.GetComponentLookup<PhysicsGravityFactor>(true)
             }.ScheduleParallel(state.Dependency);
         }
@@ -58,29 +52,34 @@ namespace SuikaScripts
         [BurstCompile]
         partial struct ClipVelocitiesJob : IJobEntity
         {
-            public float TimeStep;
-            public float3 Gravity;
             [ReadOnly] public ComponentLookup<PhysicsGravityFactor> GravityFactorLookup;
 
-            void Execute(Entity entity, ref PhysicsVelocity velocity, ref LocalTransform transform, in PhysicsMass mass)
+            const float LinearSleepThreshold = 0.01f;
+            const float AngularSleepThreshold = 0.01f;
+
+            void Execute(Entity entity, ref PhysicsVelocity velocity)
             {
-                float gravityLengthInOneStep = math.length(Gravity * TimeStep);
-                
                 float factor = 1.0f;
                 if (GravityFactorLookup.HasComponent(entity))
                 {
                     factor = GravityFactorLookup[entity].Value;
                 }
 
-                // Clip velocities using a simple heuristic:
-                // zero out velocities that are smaller than gravity in one step
-                if (math.length(velocity.Linear) < factor * gravityLengthInOneStep)
-                {
-                    // Revert integration (correcting the exported position)
-                    transform.Position -= velocity.Linear * TimeStep;
+                // Only clip tiny jitter. Do NOT fight gravity integration.
+                // Previous heuristic compared against gravity step and froze newly spawned bodies.
+                float linearSpeedSq = math.lengthsq(velocity.Linear);
+                float angularSpeedSq = math.lengthsq(velocity.Angular);
 
-                    // Clip velocity
+                float linearThresholdSq = LinearSleepThreshold * LinearSleepThreshold;
+                float angularThresholdSq = AngularSleepThreshold * AngularSleepThreshold;
+
+                if (factor <= 0f && linearSpeedSq < linearThresholdSq)
+                {
                     velocity.Linear = float3.zero;
+                }
+
+                if (angularSpeedSq < angularThresholdSq)
+                {
                     velocity.Angular = float3.zero;
                 }
             }

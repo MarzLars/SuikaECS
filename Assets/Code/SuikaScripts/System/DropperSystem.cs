@@ -101,14 +101,36 @@ namespace SuikaScripts
             _tierBufferLookup.Update(ref state);
             _spawnPointLookup.Update(ref state);
             var config = SystemAPI.GetSingletonRW<SuikaGameConfig>();
+            Entity suikaConfigEntity = SystemAPI.GetSingletonEntity<SuikaGameConfig>();
+
+            bool stressTestEnabled = false;
+            foreach (var stressConfig in SystemAPI.Query<RefRO<DropperStressTestConfig>>())
+            {
+                if (stressConfig.ValueRO.Enabled == 0)
+                    continue;
+
+                stressTestEnabled = true;
+                break;
+            }
 
             // 2. Collect and count all spawn requests on the main thread.
             var requests = new NativeList<Entity>(Allocator.Temp);
             int totalSpawnCount = 0;
             foreach (var (request, requestEntity) in SystemAPI.Query<DropperInitialSpawnRequest>().WithEntityAccess())
             {
-                totalSpawnCount += math.max(0, request.Count);
+                // Normal mode: only config entity should request spawn.
+                // Stress mode: allow request-producing entities (e.g. dropper stress config).
+                if (stressTestEnabled || requestEntity == suikaConfigEntity)
+                {
+                    totalSpawnCount += math.max(0, request.Count);
+                }
+
                 requests.Add(requestEntity);
+            }
+
+            if (!stressTestEnabled && totalSpawnCount > 0)
+            {
+                totalSpawnCount = 1;
             }
 
             // 3. Consume all requests on the main thread BEFORE scheduling any jobs.
@@ -122,7 +144,7 @@ namespace SuikaScripts
 
             // 5. Consolidated spawning job if there's work to do.
             if (totalSpawnCount > 0 && 
-                SystemAPI.TryGetSingletonEntity<SuikaGameConfig>(out var configEntity) &&
+                SystemAPI.TryGetSingletonEntity<SuikaGameConfig>(out var spawnConfigEntity) &&
                 SystemAPI.TryGetSingletonEntity<DropperSpawnPoint>(out var dropperSpawnEntity))
             {
                 var dropperPosition = _spawnPointLookup[dropperSpawnEntity].Position;
@@ -136,7 +158,7 @@ namespace SuikaScripts
                 {
                     ECB = parallelEcb,
                     TierBufferLookup = _tierBufferLookup,
-                    ConfigEntity = configEntity,
+                    ConfigEntity = spawnConfigEntity,
                     DropperPosition = dropperPosition,
                     Seed = seed,
                     StartSpawnIndex = startSpawnIndex
@@ -247,6 +269,5 @@ namespace SuikaScripts
                 });
             }
         }
-
     }
 }

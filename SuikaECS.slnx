@@ -30,10 +30,10 @@
   <Project Path="Unity.Physics.Custom.Editor.csproj" />
   <Project Path="UnityEditor.TestRunner.csproj" />
   <Project Path="Unity.2D.SpriteShape.Runtime.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.UnifiedRayTracing.Runtime.csproj" />
   <Project Path="Unity.Physics.Hybrid.csproj" />
   <Project Path="Unity.Burst.CodeGen.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Unity.Entities.Hybrid.csproj" />
   <Project Path="Unity.PerformanceTesting.csproj" />
   <Project Path="Unity.2D.Tilemap.Extras.Editor.csproj" />
@@ -106,6 +106,7 @@
   <Project Path="Unity.2D.Triangulation.Runtime.csproj" />
   <Project Path="Unity.Numerics.Linear.csproj" />
   <Project Path="Unity.RenderPipelines.Universal.Config.Runtime.csproj" />
+  <Project Path="Domain_Reload.csproj" />
   <Project Path="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.csproj" />
   <Project Path="Unity.RenderPipelines.Core.ShaderLibrary.csproj" />
 </Solution>

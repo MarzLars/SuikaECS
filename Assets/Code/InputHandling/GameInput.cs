@@ -40,7 +40,7 @@ namespace Code.InputHandling
             if (actionsAsset == null)
                 throw new InvalidOperationException("InputActionAsset not configured.");
 
-            SupportsMobileMotion = Application.isMobilePlatform;
+            SupportsMobileMotion = Application.isMobilePlatform || Application.isEditor;
 
             if (SupportsMobileMotion) {
                 var accelerometer = Accelerometer.current;
@@ -126,7 +126,10 @@ namespace Code.InputHandling
             if (accelerometer is null)
                 return 0f;
 
-            float rawTiltX = accelerometer.acceleration.ReadValue().x / s_AccelerometerScale;
+            if (!accelerometer.enabled)
+                InputSystem.EnableDevice(accelerometer);
+
+            float rawTiltX = -accelerometer.acceleration.ReadValue().x / s_AccelerometerScale;
             if (Mathf.Abs(rawTiltX) < s_AccelerometerDeadZone)
                 rawTiltX = 0f;
 

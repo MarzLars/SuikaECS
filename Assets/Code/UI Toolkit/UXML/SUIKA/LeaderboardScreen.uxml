@@ -9,6 +9,8 @@ This was created with the help of Assistant, a Unity Artificial Intelligence pro
         <engine:VisualElement name="leaderboard__card" class="login-card" style="width: 700px; max-height: 80%;">
             <engine:Label text="LEADERBOARD" class="title-label"/>
             
+            <engine:Label name="leaderboard__status-label" text="Loading scores..." class="subtitle-label" style="display: none;"/>
+            
             <engine:ScrollView name="leaderboard__list" style="width: 100%; flex-grow: 1; margin-top: 20px;"/>
             
             <engine:Button name="leaderboard__close-button" text="CLOSE" class="btn-danger"/>

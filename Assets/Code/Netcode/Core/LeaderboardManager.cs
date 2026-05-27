@@ -58,7 +58,12 @@ namespace Suika.Scripts.Core
 
         public async Task<LeaderboardScoresPage> GetGlobalLeaderboardAsync(int limit = 50, int offset = 0)
         {
-            EnsureAuthenticated();
+            if (m_GameManagerUGS.IsOfflineMode || 
+                UnityServices.State != ServicesInitializationState.Initialized || 
+                !AuthenticationService.Instance.IsSignedIn)
+            {
+                return null;
+            }
 
             var scores = await LeaderboardsService.Instance.GetScoresAsync(
                 DefaultLeaderboardId,

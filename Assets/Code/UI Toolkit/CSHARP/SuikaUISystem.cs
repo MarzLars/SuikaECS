@@ -317,13 +317,30 @@ StartScreen = StartScreen.Instantiate(root.Q<VisualElement>("StartScreen")),
         }
 
         private static async void FetchAndShowLeaderboard(LeaderboardScreen screen, LeaderboardManager manager) {
+            screen.Show();
+            screen.SetStatus("Connecting to services...");
+
             try {
+                if (Unity.Services.Core.UnityServices.State != Unity.Services.Core.ServicesInitializationState.Initialized) {
+                    screen.SetStatus("Unity Services not initialized. Please start from InitBoot scene.");
+                    return;
+                }
+
+                if (!Unity.Services.Authentication.AuthenticationService.Instance.IsSignedIn) {
+                    screen.SetStatus("Not signed in. Please log in to view scores.");
+                    return;
+                }
+
                 var scores = await manager.GetGlobalLeaderboardAsync();
+                if (scores == null) {
+                    screen.SetStatus("Could not fetch scores. Offline mode active.");
+                    return;
+                }
                 screen.Populate(scores);
-                screen.Show();
             }
             catch (Exception e) {
                 Debug.LogError($"Error fetching leaderboard: {e.Message}");
+                screen.SetStatus("Error connecting to leaderboard.");
             }
         }
 
@@ -333,7 +350,7 @@ StartScreen = StartScreen.Instantiate(root.Q<VisualElement>("StartScreen")),
                 if (leaderboardManager != null) {
                     try {
                         var scores = await leaderboardManager.GetGlobalLeaderboardAsync(limit: 1);
-                        if (scores.Results.Count > 0) {
+                        if (scores != null && scores.Results.Count > 0) {
                             hud.SetOpponentScore((int)scores.Results[0].Score, "Opponent to beat");
                         }
                     }

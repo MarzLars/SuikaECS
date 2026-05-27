@@ -10,6 +10,7 @@ namespace Suika.UI
     public class LeaderboardScreen : UIScreen
     {
         ScrollView m_LeaderboardList;
+        Label m_StatusLabel;
         Button m_CloseButton;
         VisualTreeAsset m_EntryTemplate;
 
@@ -19,6 +20,7 @@ namespace Suika.UI
             screen.m_EntryTemplate = entryTemplate;
 
             screen.m_LeaderboardList = screen.RootElement.Q<ScrollView>("leaderboard__list");
+            screen.m_StatusLabel = screen.RootElement.Q<Label>("leaderboard__status-label");
             screen.m_CloseButton = screen.RootElement.Q<Button>("leaderboard__close-button");
 
             screen.m_CloseButton.clicked += screen.Hide;
@@ -31,8 +33,21 @@ namespace Suika.UI
             public uint seed;
         }
 
+        public void SetStatus(string message, bool visible = true) {
+            if (m_StatusLabel == null) return;
+            m_StatusLabel.text = message;
+            m_StatusLabel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
         public void Populate(LeaderboardScoresPage scores) {
             m_LeaderboardList.Clear();
+            SetStatus("", false);
+
+            if (scores == null || scores.Results == null || scores.Results.Count == 0) {
+                SetStatus("No scores found yet.");
+                return;
+            }
+
             foreach (var entry in scores.Results) {
                 var entryElement = m_EntryTemplate.Instantiate();
                 var nameLabel = entryElement.Q<Label>("entry__name");

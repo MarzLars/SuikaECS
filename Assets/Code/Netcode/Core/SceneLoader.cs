@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Suika.Scripts.LoadingScreen;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Logger = Suika.Scripts.Utilities.Logger;
@@ -7,27 +6,17 @@ using Logger = Suika.Scripts.Utilities.Logger;
 namespace Suika.Scripts.Core
 {
     /// <summary>
-    /// Handles scene loading operations with loading screen management.
-    /// Provides smooth progress updates and ensures proper scene initialization
-    /// through controlled loading phases and scene activation.
-    /// 
-    /// Key features:
-    /// - Loading screen integration
-    /// - Progress bar smoothing
-    /// - Support for single and additive scene loading
-    /// - Safe scene activation with initialization checks
+    /// Handles scene loading operations.
+    /// Provides smooth asynchronous scene loading and proper scene initialization.
     /// </summary>
     public class SceneLoader
     {
-        readonly LoadingScreenUIController m_LoadingScreenController;
-        
-        // Scene loading shows real progress up to 90%, then smoothly animates the final 10%
+        // Scene loading shows progress up to 90%, then smoothly completes
         const float k_LoadProgressThreshold = 0.9f;
         const float k_FinalProgressSpeed = 2f;
         
-        public SceneLoader(LoadingScreenUIController loadingScreenController)
+        public SceneLoader()
         {
-            m_LoadingScreenController = loadingScreenController;
         }
         
         public Task LoadSceneAdditive(string sceneName) => LoadScene(sceneName, LoadSceneMode.Additive);
@@ -35,8 +24,6 @@ namespace Suika.Scripts.Core
         public async Task LoadScene(string sceneName, LoadSceneMode mode = LoadSceneMode.Single)
         {
             Utilities.Logger.Log($"Loading scene: {sceneName}");
-            if (m_LoadingScreenController != null)
-                m_LoadingScreenController.HandleSceneLoading();
 
             var loadOperation = SceneManager.LoadSceneAsync(sceneName, mode);
             if (loadOperation == null)
@@ -53,9 +40,6 @@ namespace Suika.Scripts.Core
             await Task.Yield();
             // Second yield ensures Awake/Start have completed
             await Task.Yield();
-            
-            if (m_LoadingScreenController != null)
-                m_LoadingScreenController.HideLoadingScreen();
         }
 
         async Task HandleLoadingProgress(AsyncOperation loadOperation)
@@ -66,8 +50,6 @@ namespace Suika.Scripts.Core
             while (loadOperation.progress < k_LoadProgressThreshold)
             {
                 progress = loadOperation.progress / k_LoadProgressThreshold;
-                if (m_LoadingScreenController != null)
-                    m_LoadingScreenController.UpdateLoadingProgress(progress);
                 await Task.Yield();
             }
             
@@ -75,13 +57,8 @@ namespace Suika.Scripts.Core
             while (progress < 1f)
             {
                 progress = Mathf.MoveTowards(progress, 1f, Time.deltaTime * k_FinalProgressSpeed);
-                if (m_LoadingScreenController != null)
-                    m_LoadingScreenController.UpdateLoadingProgress(progress);
                 await Task.Yield();
             }
-            
-            if (m_LoadingScreenController != null)
-                m_LoadingScreenController.UpdateLoadingProgress(1f);
         }
 
         async Task WaitForSceneActivation(AsyncOperation loadOperation)
@@ -101,4 +78,3 @@ namespace Suika.Scripts.Core
         }
     }
 }
-

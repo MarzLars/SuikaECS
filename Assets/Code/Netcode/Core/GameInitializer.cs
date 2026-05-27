@@ -188,7 +188,7 @@ namespace Suika.Scripts.Core
 
             RegisterCoreGameSystems(authenticationManager, seedManager, leaderboardManager);
 
-            m_GameManagerUGS.Initialize(authenticationManager, new SceneLoader(null));
+            m_GameManagerUGS.Initialize(authenticationManager, new SceneLoader());
             m_PlayerDataManager.Initialize(m_PlayerDataManagerClient);
         }
 

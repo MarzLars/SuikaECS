@@ -20,7 +20,6 @@ namespace Suika.Scripts.PlayerDataManagement
         public ProfilePicture ProfilePictureData { get; private set; }
         public Sprite ProfileSprite { get; private set; }
         public PlayerData PlayerDataLocal { get; private set; }
-        public PlayerEconomyData PlayerEconomyDataLocal { get; private set; }
         public string PlayerId { get; private set; }
         public bool IsCloudDataInitialized { get; private set; }
 
@@ -34,7 +33,6 @@ namespace Suika.Scripts.PlayerDataManagement
         public event Action<Sprite> ProfilePictureUpdated;
         public event Action CloudDataInitialized;
         public event Action DeleteCachedData;
-        public event Action NoGiftHeartsLeftPopup;
 
         public PlayerDataManager(GameManagerUGS gameManagerUGS, LocalStorageSystem localStorageSystem, RandomProfilePicturesSO profilePics)
         {
@@ -64,8 +62,6 @@ namespace Suika.Scripts.PlayerDataManagement
                 PlayerDataLocal = CreateStartingPlayerData();
                 SavePlayerDataLocal();
             }
-
-            PlayerEconomyDataLocal = m_LocalStorageSystem.LoadEconomyData() ?? new PlayerEconomyData();
 
             ProfilePictureData = m_LocalStorageSystem.LoadProfilePicture();
             if (ProfilePictureData != null)
@@ -163,25 +159,6 @@ namespace Suika.Scripts.PlayerDataManagement
         public void UpdateAnonymousStatus(bool isAnonymous)
         {
             _ = isAnonymous;
-        }
-
-        public bool ModifyGiftHearts(int delta)
-        {
-            if (PlayerDataLocal == null)
-            {
-                return false;
-            }
-
-            if (delta < 0 && PlayerDataLocal.GiftHearts <= 0)
-            {
-                NoGiftHeartsLeftPopup?.Invoke();
-                return false;
-            }
-
-            PlayerDataLocal.GiftHearts = Mathf.Max(0, PlayerDataLocal.GiftHearts + delta);
-            LocalPlayerDataUpdated?.Invoke(PlayerDataLocal);
-            SavePlayerDataLocal();
-            return true;
         }
 
         // -----------------------------------------------------------------------

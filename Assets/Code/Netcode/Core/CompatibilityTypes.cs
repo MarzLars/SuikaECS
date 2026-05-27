@@ -133,50 +133,10 @@ namespace Suika.Scripts.Core
         };
     }
 
-    /// <summary>
-    /// Stub for Suika social bindings (friends management).
-    /// Gift-heart and player-discovery methods removed.
-    /// Add-friend now searches by display name (backed by Unity Friends SDK in production).
-    /// </summary>
-    public sealed class SuikaBindings
+    // Minimal HubUIController stub referenced by AccountManagementUIController
+    public class HubUIController : UnityEngine.MonoBehaviour
     {
-        readonly List<Player> m_Friends = new();
-
-        public Task<List<Player>> GetFriends() =>
-            Task.FromResult(Clone(m_Friends));
-
-        /// <summary>
-        /// Adds a friend by their player ID (resolved from username#tag by caller).
-        /// </summary>
-        public Task<List<Player>> AddFriend(string playerId)
-        {
-            Upsert(playerId);
-            return Task.FromResult(Clone(m_Friends));
-        }
-
-        public Task<List<Player>> RemoveFriend(string playerId)
-        {
-            m_Friends.RemoveAll(p => p.PlayerId == playerId);
-            return Task.FromResult(Clone(m_Friends));
-        }
-
-        void Upsert(string playerId)
-        {
-            if (m_Friends.Any(p => p.PlayerId == playerId)) return;
-            m_Friends.Add(new Player { PlayerId = playerId, DisplayName = $"Player {playerId}" });
-        }
-
-        static List<Player> Clone(IEnumerable<Player> src) =>
-            src.Select(p => new Player
-            {
-                PlayerId = p.PlayerId,
-                DisplayName = p.DisplayName,
-                PlayerPortrait = new ProfilePicture
-                {
-                    Type = p.PlayerPortrait?.Type,
-                    ImageId = p.PlayerPortrait?.ImageId ?? 0,
-                    ImageData = p.PlayerPortrait?.ImageData
-                }
-            }).ToList();
+        public void ShowMainHub() { }
+        public void HandleToggleAccountManagementMenu() { }
     }
 }

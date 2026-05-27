@@ -6,6 +6,5 @@ namespace Suika.Scripts.Core
     public class CloudBindingsProvider
     {
         public SuikaGameBindings SuikaGameBindings { get; } = new();
-        public SuikaBindings SuikaBindings { get; } = new();
     }
 }

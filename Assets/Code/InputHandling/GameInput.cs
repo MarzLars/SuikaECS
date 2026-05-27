@@ -19,6 +19,7 @@ namespace Code.InputHandling
         static float s_AccelerometerDeadZone = AccelerometerDeadZone;
         static float s_AccelerometerScale = AccelerometerScale;
         static float s_AccelerometerSmoothing = AccelerometerSmoothing;
+        static bool s_InvertAccelerometer = false;
         static InputAction Interact;
         static InputAction Click;
         static InputAction Submit;
@@ -129,7 +130,10 @@ namespace Code.InputHandling
             if (!accelerometer.enabled)
                 InputSystem.EnableDevice(accelerometer);
 
-            float rawTiltX = -accelerometer.acceleration.ReadValue().x / s_AccelerometerScale;
+            float rawTiltX = accelerometer.acceleration.ReadValue().x / s_AccelerometerScale;
+            if (s_InvertAccelerometer)
+                rawTiltX *= -1f;
+
             if (Mathf.Abs(rawTiltX) < s_AccelerometerDeadZone)
                 rawTiltX = 0f;
 
@@ -149,10 +153,15 @@ namespace Code.InputHandling
             return s_AccelerometerSmoothing;
         }
 
-        public static void ApplyAccelerometerSettings(float deadZone, float scale, float smoothing) {
+        public static bool IsAccelerometerInverted() {
+            return s_InvertAccelerometer;
+        }
+
+        public static void ApplyAccelerometerSettings(float deadZone, float scale, float smoothing, bool invert) {
             s_AccelerometerDeadZone = Mathf.Max(0f, deadZone);
             s_AccelerometerScale = Mathf.Max(0.0001f, scale);
             s_AccelerometerSmoothing = Mathf.Clamp01(smoothing);
+            s_InvertAccelerometer = invert;
             s_SmoothedAccelerometerTiltX = 0f;
         }
 

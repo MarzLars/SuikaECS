@@ -22,6 +22,7 @@
                     <engine:FloatField name="settings__accelerometer-deadzone" label="Accelerometer Deadzone"/>
                     <engine:FloatField name="settings__accelerometer-scale" label="Accelerometer Scale"/>
                     <engine:FloatField name="settings__accelerometer-smoothing" label="Accelerometer Smoothing"/>
+                    <engine:Toggle name="settings__accelerometer-invert" label="Invert Accelerometer"/>
                 </engine:VisualElement>
                 
                 <engine:VisualElement name="settings__social-section"

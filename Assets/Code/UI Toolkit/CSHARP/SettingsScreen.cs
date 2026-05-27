@@ -9,6 +9,7 @@ namespace Suika.UI
         FloatField m_AccelerometerDeadZoneField;
         FloatField m_AccelerometerScaleField;
         FloatField m_AccelerometerSmoothingField;
+        Toggle m_AccelerometerInvertToggle;
         FloatField m_AimMaxXField;
         FloatField m_AimMinXField;
 
@@ -33,6 +34,7 @@ namespace Suika.UI
             screen.m_AccelerometerScaleField = screen.RootElement.Q<FloatField>("settings__accelerometer-scale");
             screen.m_AccelerometerSmoothingField =
                 screen.RootElement.Q<FloatField>("settings__accelerometer-smoothing");
+            screen.m_AccelerometerInvertToggle = screen.RootElement.Q<Toggle>("settings__accelerometer-invert");
             screen.m_ApplyButton = screen.RootElement.Q<Button>("settings__apply-button");
             screen.m_BackButton = screen.RootElement.Q<Button>("settings__back-button");
             
@@ -60,6 +62,9 @@ namespace Suika.UI
             if (screen.m_AccelerometerSmoothingField == null)
                 throw new InvalidOperationException(
                     "Required UI element 'settings__accelerometer-smoothing' not found in SettingsScreen UXML.");
+            if (screen.m_AccelerometerInvertToggle == null)
+                throw new InvalidOperationException(
+                    "Required UI element 'settings__accelerometer-invert' not found in SettingsScreen UXML.");
             if (screen.m_ApplyButton == null)
                 throw new InvalidOperationException(
                     "Required UI element 'settings__apply-button' not found in SettingsScreen UXML.");

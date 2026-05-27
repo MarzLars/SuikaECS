@@ -47,6 +47,7 @@ namespace Suika.UI
         public float AccelerometerDeadZone;
         public float AccelerometerScale;
         public float AccelerometerSmoothing;
+        public bool InvertAccelerometer;
     }
 
     public enum GameState

@@ -225,7 +225,8 @@ screensData.SettingsScreen.Value.Hide();
                 GameInput.ApplyAccelerometerSettings(
                     settingsEvent.AccelerometerDeadZone,
                     settingsEvent.AccelerometerScale,
-                    settingsEvent.AccelerometerSmoothing);
+                    settingsEvent.AccelerometerSmoothing,
+                    settingsEvent.InvertAccelerometer);
 
                 screensData.SettingsScreen.Value.Hide();
 

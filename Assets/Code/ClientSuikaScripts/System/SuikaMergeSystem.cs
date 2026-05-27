@@ -1,0 +1,396 @@
+﻿using Suika.UI;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
+using Unity.Physics;
+using Unity.Physics.Systems;
+using Unity.Transforms;
+
+namespace SuikaScripts
+{
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+    [UpdateAfter(typeof(PhysicsSystemGroup))]
+    [BurstCompile]
+    public partial struct SuikaMergeSystem : ISystem
+    {
+        public struct MergeEvent
+        {
+            public Entity EntityA;
+            public Entity EntityB;
+        }
+
+        [BurstCompile]
+        struct MergeCollisionJob : ICollisionEventsJob
+        {
+            [ReadOnly] public ComponentLookup<SuikaItem> ItemLookup;
+            [ReadOnly] public ComponentLookup<PoppedBubbleStaticTag> StaticTagLookup;
+            public NativeQueue<MergeEvent>.ParallelWriter MergeQueue;
+
+            public void Execute(CollisionEvent collisionEvent) {
+                if (!ItemLookup.HasComponent(collisionEvent.EntityA) ||
+                    !ItemLookup.HasComponent(collisionEvent.EntityB))
+                    return;
+
+                if (StaticTagLookup.HasComponent(collisionEvent.EntityA) &&
+                    StaticTagLookup.IsComponentEnabled(collisionEvent.EntityA))
+                    return;
+
+                if (StaticTagLookup.HasComponent(collisionEvent.EntityB) &&
+                    StaticTagLookup.IsComponentEnabled(collisionEvent.EntityB))
+                    return;
+
+                var itemA = ItemLookup[collisionEvent.EntityA];
+                var itemB = ItemLookup[collisionEvent.EntityB];
+                if (itemA.CanMerge == 0 || itemB.CanMerge == 0)
+                    return;
+
+                if (itemA.Shape != itemB.Shape || itemA.Tier != itemB.Tier)
+                    return;
+
+                MergeQueue.Enqueue(new MergeEvent {
+                    EntityA = collisionEvent.EntityA,
+                    EntityB = collisionEvent.EntityB
+                });
+            }
+        }
+
+        public void OnCreate(ref SystemState state) {
+            state.RequireForUpdate<SuikaGameConfig>();
+            state.RequireForUpdate<SuikaScore>();
+            state.RequireForUpdate<SuikaPrefabTierBuffer>();
+            state.RequireForUpdate<SuikaPopConfigBuffer>();
+            state.RequireForUpdate<SimulationSingleton>();
+            state.RequireForUpdate<EndFixedStepSimulationEntityCommandBufferSystem.Singleton>();
+            state.RequireForUpdate<DropperSpawnPoint>();
+        }
+
+        [BurstCompile]
+        public void OnDestroy(ref SystemState state) { }
+
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state) {
+            if (!SystemAPI.TryGetSingleton<SimulationSingleton>(out var simulationSingleton))
+                return;
+
+            var ecbSingleton = SystemAPI.GetSingleton<EndFixedStepSimulationEntityCommandBufferSystem.Singleton>();
+            var entityCommandBuffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
+            if (!SystemAPI.TryGetSingletonEntity<SuikaGameConfig>(out var configEntity))
+                return;
+
+            var itemLookup = SystemAPI.GetComponentLookup<SuikaItem>();
+            var staticTagLookup = SystemAPI.GetComponentLookup<PoppedBubbleStaticTag>(true);
+            var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+            var tierBufferLookup = SystemAPI.GetBufferLookup<SuikaPrefabTierBuffer>(true);
+            var burstBufferLookup = SystemAPI.GetBufferLookup<SuikaPopConfigBuffer>(true);
+
+            var mergeQueue = new NativeQueue<MergeEvent>(Allocator.TempJob);
+            var collisionJob = new MergeCollisionJob {
+                ItemLookup = itemLookup,
+                StaticTagLookup = staticTagLookup,
+                MergeQueue = mergeQueue.AsParallelWriter()
+            };
+
+            state.Dependency = collisionJob.Schedule(simulationSingleton, state.Dependency);
+
+            var processMergeJob = new ProcessMergeJob {
+                ECB = entityCommandBuffer.AsParallelWriter(),
+                MergeQueue = mergeQueue,
+                ItemLookup = itemLookup,
+                AwaitLookup = SystemAPI.GetComponentLookup<DroppedAwaitCollision>(true),
+                TransformLookup = transformLookup,
+                TierBufferLookup = tierBufferLookup,
+                BurstBufferLookup = burstBufferLookup,
+                ConfigEntity = configEntity
+            };
+
+            state.Dependency = processMergeJob.Schedule(state.Dependency);
+            state.Dependency = mergeQueue.Dispose(state.Dependency);
+        }
+
+        [BurstCompile]
+        public struct ProcessMergeJob : IJob
+        {
+            public EntityCommandBuffer.ParallelWriter ECB;
+            public NativeQueue<MergeEvent> MergeQueue;
+            public ComponentLookup<SuikaItem> ItemLookup;
+            [ReadOnly] public ComponentLookup<DroppedAwaitCollision> AwaitLookup;
+            [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
+            [ReadOnly] public BufferLookup<SuikaPrefabTierBuffer> TierBufferLookup;
+            [ReadOnly] public BufferLookup<SuikaPopConfigBuffer> BurstBufferLookup;
+            public Entity ConfigEntity;
+
+            void ReleaseDropGate(Entity entity) {
+                if (!AwaitLookup.HasComponent(entity))
+                    return;
+
+                var awaitComp = AwaitLookup[entity];
+                ECB.RemoveComponent<DroppedAwaitCollision>(0, entity);
+                ECB.RemoveComponent<DropperSpawnBlocked>(0, awaitComp.OwnerConfigEntity);
+                ECB.SetComponentEnabled<DropperPreviewReady>(0, awaitComp.OwnerConfigEntity, true);
+            }
+
+            public void Execute() {
+                if (!MergeQueue.IsCreated || MergeQueue.IsEmpty())
+                    return;
+
+                if (!TierBufferLookup.HasBuffer(ConfigEntity) || !BurstBufferLookup.HasBuffer(ConfigEntity))
+                    return;
+
+                var tierBuffer = TierBufferLookup[ConfigEntity];
+                var burstBuffer = BurstBufferLookup[ConfigEntity];
+                var consumed = new NativeHashSet<Entity>(math.max(8, MergeQueue.Count), Allocator.Temp);
+
+                while (MergeQueue.TryDequeue(out var mergeEvent)) {
+                    if (consumed.Contains(mergeEvent.EntityA) || consumed.Contains(mergeEvent.EntityB))
+                        continue;
+
+                    if (!ItemLookup.HasComponent(mergeEvent.EntityA) || !ItemLookup.HasComponent(mergeEvent.EntityB))
+                        continue;
+
+                    if (!TransformLookup.HasComponent(mergeEvent.EntityA) ||
+                        !TransformLookup.HasComponent(mergeEvent.EntityB))
+                        continue;
+
+                    var first = ItemLookup[mergeEvent.EntityA];
+                    var second = ItemLookup[mergeEvent.EntityB];
+                    if (first.CanMerge == 0 || second.CanMerge == 0)
+                        continue;
+
+                    if (first.Shape != second.Shape || first.Tier != second.Tier)
+                        continue;
+
+                    var survivorTransform = TransformLookup[mergeEvent.EntityA];
+                    var victimTransform = TransformLookup[mergeEvent.EntityB];
+                    var mergedPosition = (survivorTransform.Position + victimTransform.Position) * 0.5f;
+
+                    if (!DropperSpawnSequenceService.TryGetTierDefinition(tierBuffer, first.Tier,
+                            out var currentTierDefinition))
+                        continue;
+
+                    if (currentTierDefinition.Shape != first.Shape)
+                        continue;
+
+                    bool shouldBurst = currentTierDefinition.BurstOnMerge != 0;
+
+                    if (shouldBurst) {
+                        ReleaseDropGate(mergeEvent.EntityA);
+                        ReleaseDropGate(mergeEvent.EntityB);
+
+                        ECB.AddComponent(0, ECB.CreateEntity(0),
+                            new ScoreEvent { Amount = currentTierDefinition.ScoreValue });
+
+                        if (!TryGetBurstConfig(burstBuffer, currentTierDefinition.BurstConfigIndex,
+                                out var selectedBurstConfig))
+                            continue;
+
+                        if (!TrySpawnMaxTierBurst(
+                                ECB,
+                                tierBuffer,
+                                TransformLookup,
+                                selectedBurstConfig,
+                                mergedPosition,
+                                first,
+                                second,
+                                currentTierDefinition))
+                            continue;
+
+                        consumed.Add(mergeEvent.EntityA);
+                        consumed.Add(mergeEvent.EntityB);
+
+                        // Immediate update to prevent re-merging in subsequent fixed steps before destruction
+                        first.CanMerge = 0;
+                        second.CanMerge = 0;
+                        ItemLookup[mergeEvent.EntityA] = first;
+                        ItemLookup[mergeEvent.EntityB] = second;
+
+                        ECB.DestroyEntity(0, mergeEvent.EntityA);
+                        ECB.DestroyEntity(0, mergeEvent.EntityB);
+                        continue;
+                    }
+
+                    byte nextShape = first.Shape;
+                    byte nextTier;
+                    if (first.Shape == DropperSpawnSequenceService.SphereShape) {
+                        if (first.Tier >= DropperSpawnSequenceService.SphereMaxTier) {
+                            nextShape = DropperSpawnSequenceService.CylinderShape;
+                            nextTier = DropperSpawnSequenceService.CylinderMinTier;
+                        }
+                        else {
+                            nextTier = DropperSpawnSequenceService.PromoteTier(first.Tier,
+                                DropperSpawnSequenceService.SphereMaxTier);
+                        }
+                    }
+                    else {
+                        if (first.Tier >= DropperSpawnSequenceService.CylinderMaxTier)
+                            continue;
+
+                        nextTier = DropperSpawnSequenceService.PromoteTier(first.Tier,
+                            DropperSpawnSequenceService.CylinderMaxTier);
+                    }
+
+                    if (!DropperSpawnSequenceService.TryGetTierDefinition(tierBuffer, nextTier,
+                            out var nextTierDefinition))
+                        continue;
+
+                    if (nextTierDefinition.Shape != nextShape)
+                        continue;
+
+                    ECB.AddComponent(0, ECB.CreateEntity(0), new ScoreEvent { Amount = nextTierDefinition.ScoreValue });
+
+                    var resultPrefab = nextTierDefinition.PrefabEntity;
+                    if (resultPrefab == Entity.Null)
+                        continue;
+
+                    float sphereScale = DropperSpawnSequenceService.GetScale(nextTier);
+                    var cylinderScaleXY = 1f;
+                    if (nextTierDefinition.Shape == DropperSpawnSequenceService.SphereShape)
+                        sphereScale = nextTierDefinition.Scale;
+                    else
+                        cylinderScaleXY = nextTierDefinition.Scale;
+
+                    consumed.Add(mergeEvent.EntityA);
+                    consumed.Add(mergeEvent.EntityB);
+
+                    ReleaseDropGate(mergeEvent.EntityA);
+                    ReleaseDropGate(mergeEvent.EntityB);
+
+                    // Immediate update to prevent re-merging in subsequent fixed steps before destruction
+                    first.CanMerge = 0;
+                    second.CanMerge = 0;
+                    ItemLookup[mergeEvent.EntityA] = first;
+                    ItemLookup[mergeEvent.EntityB] = second;
+
+                    var mergedEntity = ECB.Instantiate(0, resultPrefab);
+
+                    // Baked components (SuikaItem, SuikaColorOverride) are already present on the prefab.
+                    // We only need to update the instance-specific data.
+
+                    ECB.SetComponent(0, mergedEntity, new SuikaColorOverride { Value = nextTierDefinition.Color });
+                    ECB.SetComponent(0, mergedEntity, new LocalTransform {
+                        Position = mergedPosition,
+                        Rotation = quaternion.identity,
+                        Scale = nextShape == DropperSpawnSequenceService.SphereShape ? sphereScale : 1f
+                    });
+
+                    ECB.RemoveComponent<PostTransformMatrix>(0, mergedEntity);
+                    if (nextShape == DropperSpawnSequenceService.CylinderShape)
+                        // Cylinders: scale XY only, keep Z unchanged.
+                        ECB.AddComponent(0, mergedEntity, new PostTransformMatrix {
+                            Value = float4x4.Scale(cylinderScaleXY, cylinderScaleXY, 1f)
+                        });
+
+                    ECB.SetComponent(0, mergedEntity, new SuikaItem {
+                        Tier = nextTier,
+                        Shape = nextShape,
+                        SpawnIndex = math.min(first.SpawnIndex, second.SpawnIndex),
+                        CanMerge = 1
+                    });
+
+                    ECB.DestroyEntity(0, mergeEvent.EntityA);
+                    ECB.DestroyEntity(0, mergeEvent.EntityB);
+                }
+
+                consumed.Dispose();
+            }
+
+            //Bubble burst logic
+            static bool TrySpawnMaxTierBurst(
+                EntityCommandBuffer.ParallelWriter entityCommandBuffer,
+                DynamicBuffer<SuikaPrefabTierBuffer> tierBuffer,
+                ComponentLookup<LocalTransform> transformLookup,
+                SuikaPopConfigBuffer popConfig,
+                float3 center,
+                SuikaItem first,
+                SuikaItem second,
+                SuikaPrefabTierBuffer currentTierDefinition) {
+                int burstCount = math.max(0, popConfig.SphereCount);
+                if (burstCount == 0)
+                    return true;
+
+                var burstPrefab = popConfig.SpherePrefabEntity != Entity.Null ?
+                    popConfig.SpherePrefabEntity :
+                    currentTierDefinition.PrefabEntity;
+
+                byte burstTier = currentTierDefinition.Tier;
+                float burstScale = currentTierDefinition.Scale;
+                var burstColor = currentTierDefinition.Color;
+
+                if ((burstPrefab == Entity.Null ||
+                     currentTierDefinition.Shape != DropperSpawnSequenceService.SphereShape) &&
+                    DropperSpawnSequenceService.TryGetFirstSphereDefinition(tierBuffer, out var sphereTierDefinition)) {
+                    if (burstPrefab == Entity.Null)
+                        burstPrefab = sphereTierDefinition.PrefabEntity;
+
+                    burstTier = sphereTierDefinition.Tier;
+                    burstScale = sphereTierDefinition.Scale;
+                    burstColor = sphereTierDefinition.Color;
+                }
+
+                if (burstPrefab == Entity.Null)
+                    return false;
+
+                if (transformLookup.HasComponent(burstPrefab))
+                    burstScale = transformLookup[burstPrefab].Scale;
+
+                if (popConfig.SpherePrefabEntity != Entity.Null)
+                    burstColor = new float4(1, 1, 1, 1);
+
+                burstScale *= popConfig.SphereSize;
+
+                float radius = math.max(0f, popConfig.Radius);
+                int baseSpawnIndex = math.min(first.SpawnIndex, second.SpawnIndex);
+                float angleStep = 2f * math.PI / math.max(1, burstCount);
+
+                for (var i = 0; i < burstCount; i++) {
+                    float angle = angleStep * i;
+                    var offset = radius * new float2(math.cos(angle), math.sin(angle));
+                    var spawnPosition = center + new float3(offset.x, offset.y, 0f);
+
+                    var burstEntity = entityCommandBuffer.Instantiate(0, burstPrefab);
+                    entityCommandBuffer.SetComponent(0, burstEntity, new SuikaColorOverride {
+                        Value = burstColor
+                    });
+
+                    entityCommandBuffer.SetComponent(0, burstEntity, LocalTransform.FromPositionRotationScale(
+                        spawnPosition,
+                        quaternion.identity,
+                        burstScale));
+                    entityCommandBuffer.RemoveComponent<PostTransformMatrix>(0, burstEntity);
+
+                    // Use AddComponent instead of SetComponent to ensure they exist on the entity instance
+                    entityCommandBuffer.AddComponent(0, burstEntity, new SuikaItem {
+                        Tier = burstTier,
+                        Shape = DropperSpawnSequenceService.SphereShape,
+                        SpawnIndex = baseSpawnIndex + i,
+                        CanMerge = 0
+                    });
+
+                    entityCommandBuffer.AddComponent(0, burstEntity, new PoppedBubbleSleepTimer {
+                        SecondsRemaining = popConfig.SleepDelaySeconds,
+                        IsSleeping = 0
+                    });
+                    entityCommandBuffer.SetComponentEnabled<PoppedBubbleSleepTimer>(0, burstEntity, true);
+
+                    entityCommandBuffer.AddComponent(0, burstEntity, new PoppedBubbleStaticTag());
+                    entityCommandBuffer.SetComponentEnabled<PoppedBubbleStaticTag>(0, burstEntity, false);
+                }
+
+                return true;
+            }
+
+            static bool TryGetBurstConfig(DynamicBuffer<SuikaPopConfigBuffer> burstBuffer, int index,
+                out SuikaPopConfigBuffer popConfig) {
+                if (index < 0 || index >= burstBuffer.Length) {
+                    popConfig = default;
+                    return false;
+                }
+
+                popConfig = burstBuffer[index];
+                return true;
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+<!--
+2026-05-27 AI-Tag
+This was created with the help of Assistant, a Unity Artificial Intelligence product.
+-->
+<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False"
+             noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <engine:Style src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/SuikaStyles.uss?fileID=7433441132597879392&amp;guid=db6f98964b2dcab47b40a3132182297a&amp;type=3#SuikaStyles"/>
+    <engine:VisualElement name="leaderboard__root" class="modal-overlay">
+        <engine:VisualElement name="leaderboard__card" class="login-card" style="width: 700px; max-height: 80%;">
+            <engine:Label text="LEADERBOARD" class="title-label"/>
+            
+            <engine:ScrollView name="leaderboard__list" style="width: 100%; flex-grow: 1; margin-top: 20px;"/>
+            
+            <engine:Button name="leaderboard__close-button" text="CLOSE" class="btn-danger"/>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

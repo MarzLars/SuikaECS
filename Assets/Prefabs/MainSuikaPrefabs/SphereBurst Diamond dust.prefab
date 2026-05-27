@@ -192,6 +192,7 @@ MonoBehaviour:
   shape: 0
   tier: 0
   color: {r: 1, g: 1, b: 1, a: 1}
+  material: {fileID: 2100000, guid: 4280e21f9da86f3478a83f54465a2806, type: 2}
   canMerge: 0
   isBurstPrefab: 1
 --- !u!1 &4720835489408492256

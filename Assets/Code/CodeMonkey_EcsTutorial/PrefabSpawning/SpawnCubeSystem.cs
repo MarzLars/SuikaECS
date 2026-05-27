@@ -16,7 +16,7 @@ namespace Code.CodeMonkey_EcsTutorial.PrefabSpawning
 
             var spawnCubeConfig = SystemAPI.GetSingleton<SpawnCubeConfig>();
 
-            for (int i = 0; i < spawnCubeConfig.AmountToSpawn; i++) {
+            for (var i = 0; i < spawnCubeConfig.AmountToSpawn; i++) {
                 var spawnedEntity = EntityManager.Instantiate(spawnCubeConfig.CubePrefabEntity);
 
                 SystemAPI.SetComponent(spawnedEntity,

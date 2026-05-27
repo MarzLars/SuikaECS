@@ -1,0 +1,10 @@
+<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <Style src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/BootTitle.uss?fileID=7433441132597879392&amp;guid=62f17b0c64c14e7a9a5fb97f60d1b6c4&amp;type=3#BootTitle"/>
+    <engine:VisualElement name="BootTitleRoot" class="boot-title-root" style="flex-grow: 0; flex-shrink: 1; align-self: center;">
+        <engine:VisualElement class="boot-title-backdrop" style="align-self: center;"/>
+        <engine:VisualElement class="boot-title-content" style="font-size: initial; align-self: center;">
+            <engine:Label name="BootTitleLabel" text="MONEY WAZOO" class="boot-title-label" style="-unity-font-definition: url(&quot;project://database/Assets/Art/Fonts/Satoshi-Black.otf?fileID=12800000&amp;guid=79f0df249fa55324b8f777e4c8b7bc7c&amp;type=3#Satoshi-Black&quot;); font-size: initial;"/>
+            <engine:Label name="BootSubtitleLabel" text="Login. Merge. Win!" class="boot-subtitle-label" style="-unity-font-style: italic; -unity-font-definition: initial; font-size: initial;"/>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

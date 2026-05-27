@@ -1,0 +1,12 @@
+<!--
+2026-05-27 AI-Tag
+This was created with the help of Assistant, a Unity Artificial Intelligence product.
+-->
+<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False"
+             noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <engine:VisualElement name="leaderboard-entry" style="flex-direction: row; justify-content: space-between; align-items: center; width: 100%; padding: 10px; border-bottom-width: 1px; border-color: rgba(255,255,255,0.1);">
+        <engine:Label name="entry__name" text="Player Name" style="font-size: 24px; color: white; flex-grow: 1;"/>
+        <engine:Label name="entry__score" text="12345" style="font-size: 24px; color: #f39c12; margin-right: 20px;"/>
+        <engine:Button name="entry__challenge-button" text="CHALLENGE" class="suika-button" style="min-width: 150px; min-height: 44px; height: 44px; font-size: 16px; margin: 0;"/>
+    </engine:VisualElement>
+</engine:UXML>

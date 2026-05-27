@@ -1,7 +1,11 @@
-<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="False" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
-    <engine:VisualElement name="gameover__container" style="flex-grow: 1; justify-content: center; align-items: center; background-color: rgba(100, 0, 0, 0.8); display: flex;">
-        <engine:Label text="GAME OVER" style="font-size: 80px; color: white; -unity-font-style: bold; margin-bottom: 20px;"/>
-        <engine:Label name="gameover__score-label" text="Final Score: 0" style="font-size: 50px; color: white; margin-bottom: 50px;"/>
+<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False"
+             noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <engine:VisualElement name="gameover__container"
+                          style="flex-grow: 1; justify-content: center; align-items: center; background-color: rgba(0, 100, 0, 0.8); display: flex;">
+        <engine:Label text="Cash out!"
+                      style="font-size: 80px; color: white; -unity-font-style: bold; margin-bottom: 20px;"/>
+        <engine:Label name="gameover__score-label" text="Final Score: 0"
+                      style="font-size: 50px; color: white; margin-bottom: 50px;"/>
         <engine:Button name="gameover__restart-button" text="RESTART" class="suika-button"/>
     </engine:VisualElement>
 </engine:UXML>

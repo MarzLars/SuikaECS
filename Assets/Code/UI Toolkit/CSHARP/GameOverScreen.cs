@@ -1,3 +1,4 @@
+using System;
 using Unity.Entities;
 using UnityEngine.UIElements;
 
@@ -16,6 +17,13 @@ namespace Suika.UI
             screen.m_FinalScoreLabel = screen.RootElement.Q<Label>("gameover__score-label");
             screen.m_RestartButton = screen.RootElement.Q<Button>("gameover__restart-button");
 
+            if (screen.m_FinalScoreLabel is null)
+                throw new InvalidOperationException(
+                    "Required UI element 'gameover__score-label' not found in GameOverScreen UXML.");
+            if (screen.m_RestartButton is null)
+                throw new InvalidOperationException(
+                    "Required UI element 'gameover__restart-button' not found in GameOverScreen UXML.");
+
             screen.m_RestartButton.clicked += screen.OnClickRestart;
 
             screen.RootElement.style.display = DisplayStyle.None;
@@ -23,9 +31,7 @@ namespace Suika.UI
         }
 
         public void SetFinalScore(int score) {
-            if (m_FinalScoreLabel != null) {
-                m_FinalScoreLabel.text = $"Final Score: {score}";
-            }
+            m_FinalScoreLabel.text = $"Final Score: {score}";
         }
 
         public void OnClickRestart() {

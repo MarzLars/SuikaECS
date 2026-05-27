@@ -1,9 +1,27 @@
-<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="False" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
-    <engine:Template name="GameOver" src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/GameOverScreen.uxml?fileID=9197481963319205126&amp;guid=213752c8288bd9148a09d495248128ed&amp;type=3#GameOverScreen"/>
-    <engine:Template name="HUD" src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/HUDScreen.uxml?fileID=9197481963319205126&amp;guid=aa6c25a3fea5c2441875b1ca7deca06a&amp;type=3#HUDScreen"/>
-    <engine:Template name="Start" src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/StartScreen.uxml?fileID=9197481963319205126&amp;guid=99b88f689f39c6142bc7df38c843fa30&amp;type=3#StartScreen"/>
+<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False"
+             noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <engine:Template name="GameOver"
+                     src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/GameOverScreen.uxml?fileID=9197481963319205126&amp;guid=213752c8288bd9148a09d495248128ed&amp;type=3#GameOverScreen"/>
+    <engine:Template name="HUD"
+                     src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/HUDScreen.uxml?fileID=9197481963319205126&amp;guid=aa6c25a3fea5c2441875b1ca7deca06a&amp;type=3#HUDScreen"/>
+    <engine:Template name="Settings"
+                     src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/SettingsScreen.uxml?fileID=9197481963319205126&amp;guid=6f1a2c3d4e5f6789abcdeffedcba9876&amp;type=3#SettingsScreen"/>
+    <engine:Template name="Leaderboard"
+                     src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/LeaderboardScreen.uxml?fileID=9197481963319205126&amp;guid=1c68d25011cff1344a67347537de0f2c&amp;type=3#LeaderboardScreen"/>
+    <engine:Template name="Friends"
+                     src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/FriendsScreen.uxml?fileID=9197481963319205126&amp;guid=13596e5444b11094db783a758de44083&amp;type=3#FriendsScreen"/>
+<engine:Template name="Start"
+                     src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/StartScreen.uxml?fileID=9197481963319205126&amp;guid=99b88f689f39c6142bc7df38c843fa30&amp;type=3#StartScreen"/>
     <Style src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/SuikaStyles.uss?fileID=7433441132597879392&amp;guid=db6f98964b2dcab47b40a3132182297a&amp;type=3#SuikaStyles"/>
-    <engine:Instance name="StartScreen" picking-mode="Ignore" template="Start" class="full-screen"/>
+    <engine:Instance name="StartScreen" picking-mode="Ignore" template="Start" class="full-screen"
+                     style="display: flex;"/>
     <engine:Instance name="HUDScreen" picking-mode="Ignore" template="HUD" class="full-screen" style="display: none;"/>
-    <engine:Instance name="GameOverScreen" picking-mode="Ignore" template="GameOver" class="full-screen" style="display: none;"/>
+    <engine:Instance name="GameOverScreen" picking-mode="Ignore" template="GameOver" class="full-screen"
+                     style="display: none;"/>
+    <engine:Instance name="SettingsScreen" picking-mode="Ignore" template="Settings" class="full-screen"
+                     style="display: none;"/>
+    <engine:Instance name="LeaderboardScreen" picking-mode="Ignore" template="Leaderboard" class="full-screen"
+                     style="display: none;"/>
+    <engine:Instance name="FriendsScreen" picking-mode="Ignore" template="Friends" class="full-screen"
+                     style="display: none;"/>
 </engine:UXML>

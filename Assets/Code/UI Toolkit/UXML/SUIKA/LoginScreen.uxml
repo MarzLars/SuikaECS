@@ -1,0 +1,27 @@
+<engine:UXML xmlns:engine="UnityEngine.UIElements" editor-extension-mode="False" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd">
+    <Style src="project://database/Assets/Code/UI%20Toolkit/UXML/SUIKA/SuikaStyles.uss?fileID=7433441132597879392&amp;guid=db6f98964b2dcab47b40a3132182297a&amp;type=3#SuikaStyles"/>
+    <engine:VisualElement name="LoginScreenRoot" class="full-screen" style="justify-content: center; align-items: center; background-color: rgba(14, 18, 29, 0.95); display: flex;">
+        <engine:VisualElement name="MainMenuContainer" style="width: 480px; padding: 40px; border-radius: 20px; background-color: rgba(255, 255, 255, 0.05); border-width: 1px; border-color: rgba(255, 255, 255, 0.1); align-items: center; display: flex;">
+            <engine:Label text="MONEY WAZOO" style="font-size: 54px; color: rgb(243, 156, 18); -unity-font-style: bold; margin-bottom: 40px; -unity-text-align: center;"/>
+            <engine:VisualElement name="LoginButtonsElement" style="width: 100%; align-items: center; margin-bottom: 20px;">
+                <engine:Button name="GuestPlayButton" text="PLAY ANONYMOUS" class="suika-button" style="width: 100%; height: 80px; margin-bottom: 15px;"/>
+                <engine:Button name="ConnectAccountButton" text="UNITY ACCOUNT" class="suika-button" style="width: 100%; height: 80px; background-color: rgb(41, 128, 185);"/>
+            </engine:VisualElement>
+            <engine:Button name="SignUpInfoButton" text="PLAY OFFLINE" class="suika-button" style="min-width: 120px; min-height: 44px; height: 44px; font-size: 16px; background-color: rgba(255, 255, 255, 0.1); border-radius: 22px; margin-top: 10px;"/>
+            <engine:VisualElement name="SignUpInfoPopUp" style="position: absolute; width: 440px; padding: 30px; border-radius: 15px; background-color: rgba(19, 24, 38, 0.98); border-width: 1px; border-color: rgb(243, 156, 18); justify-content: center; align-items: center; display: none; top: 50px;">
+                <engine:Label text="ABOUT ACCOUNT SYNC" style="font-size: 24px; color: rgb(243, 156, 18); -unity-font-style: bold; margin-bottom: 15px;"/>
+                <engine:Label text="Connecting your social account allows you to securely save your progress in the cloud and compete on the global high score leaderboards!" style="font-size: 16px; color: white; -unity-text-align: center; margin-bottom: 20px; white-space: normal;"/>
+                <engine:Button name="ClosePopUpButton" text="CLOSE" class="suika-button" style="min-width: 150px; min-height: 50px; height: 50px; font-size: 18px; background-color: rgb(192, 57, 43);"/>
+            </engine:VisualElement>
+        </engine:VisualElement>
+        <engine:VisualElement name="SignInElement" style="position: absolute; justify-content: center; align-items: center; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: none;">
+            <engine:VisualElement name="SignInBackground" style="width: 480px; padding: 40px; border-radius: 20px; background-color: rgb(25, 31, 46); border-width: 1px; border-color: rgba(255, 255, 255, 0.15); align-items: center;">
+                <engine:Label text="CHOOSE SIGN-IN" style="font-size: 32px; color: white; -unity-font-style: bold; margin-bottom: 30px;"/>
+                <engine:VisualElement name="SignUpButtonContainer" style="width: 100%; align-items: center;">
+                    <engine:Button name="ButtonUnityID" text="CONTINUE WITH UNITY" class="suika-button" style="width: 100%; height: 80px; margin-bottom: 15px; background-color: rgb(44, 62, 80);"/>
+                </engine:VisualElement>
+                <engine:Button name="ButtonClose" text="BACK" class="suika-button" style="width: 160px; min-height: 50px; height: 50px; font-size: 18px; background-color: rgba(255, 255, 255, 0.1); margin-top: 30px;"/>
+            </engine:VisualElement>
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

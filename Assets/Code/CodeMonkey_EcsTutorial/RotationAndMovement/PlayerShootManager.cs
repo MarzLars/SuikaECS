@@ -4,6 +4,7 @@ namespace Code.CodeMonkey_EcsTutorial.RotationAndMovement
 {
     public class PlayerShootManager : MonoBehaviour
     {
+        /*
         public GameObject shootPopupPrefab;
         public static PlayerShootManager Instance { get; private set; }
 

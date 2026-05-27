@@ -5,18 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/Tutorial + Testing/CodeMonkey_Tutorial.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 0
-    path: Assets/Scenes/Tutorial + Testing/Physics.unity
-    guid: 22c20820e3df07148b77d59dd29a874f
-  - enabled: 0
-    path: Assets/Scenes/Tutorial + Testing/UI_Test.unity
-    guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
-    path: Assets/Scenes/Suika/Main.unity
+    path: Assets/Scenes/Suika/InitBoot.unity
+    guid: 7c2999ef41daf3045a779c8c7db9f87b
+  - enabled: 1
+    path: Assets/Scenes/Suika/MainLogin.unity
+    guid: 04d4d973062c7cf4a874b8634e956490
+  - enabled: 1
+    path: Assets/Scenes/Suika/MergeGame.unity
     guid: 3f21aba474362ee418661919325a488a
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
+    com.unity.input.settings: {fileID: 11400000, guid: 652ba11964623b540a27407be1cad7e2, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

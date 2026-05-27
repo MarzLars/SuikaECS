@@ -34,7 +34,7 @@ namespace Code.CodeMonkey_EcsTutorial.RotationAndMovement.Systems
                 });
 
                 OnShoot?.Invoke(this, EventArgs.Empty);
-                PlayerShootManager.Instance.PlayerShoot(localTransform.ValueRO.Position);
+                //PlayerShootManager.Instance.PlayerShoot(localTransform.ValueRO.Position);
             }
 
             entityCommandBuffer.Playback(EntityManager);

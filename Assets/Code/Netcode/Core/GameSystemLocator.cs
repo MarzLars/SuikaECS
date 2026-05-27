@@ -78,7 +78,7 @@ namespace Suika.Scripts.Core
             {
                 throw new InvalidOperationException(
                     "GameSystemLocator is not initialized. This usually means you started from the wrong scene. " +
-                    "Please start from the InitGemHunterUGS to ensure proper game initialization."
+                    "Please start from the InitBoot scene to ensure proper game initialization."
                 );
             }
             if (s_Instance.m_Services.TryGetValue(typeof(T), out var service))

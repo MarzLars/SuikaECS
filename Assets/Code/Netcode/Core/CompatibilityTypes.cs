@@ -12,7 +12,6 @@ using UnityEngine;
 // GemHunterUGS.* namespaces) have been removed.
 // ---------------------------------------------------------------------------
 
-// Empty namespace aliases kept so any lingering partial references compile.
 namespace GemHunterUGS.Scripts.Core { }
 namespace GemHunterUGS.Scripts.Friends { }
 namespace GemHunterUGS.Scripts.PlayerDataManagement { }

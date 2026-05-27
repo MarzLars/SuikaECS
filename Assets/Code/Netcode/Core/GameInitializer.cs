@@ -150,7 +150,10 @@ namespace Suika.Scripts.Core
                     return;
                 }
 
-                var options = new InitializationOptions().SetEnvironmentName(k_Environment);
+                var options = new InitializationOptions();
+#if !UNITY_EDITOR
+                options.SetEnvironmentName(k_Environment);
+#endif
                 await UnityServices.InitializeAsync(options);
                 Utilities.Logger.Log("✅ Unity Gaming Services initialized successfully.");
             }

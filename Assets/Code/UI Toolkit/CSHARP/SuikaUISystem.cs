@@ -12,7 +12,7 @@ namespace Suika.UI
      * MOBILE CONSIDERATIONS FOR UI TOOLKIT (Unity 6 / ECS):
      * 1. Resolution & Scaling:
      *    - Use PanelSettings with 'Scale With Screen Size'.
-     *    - Reference Resolution: 1080x1920 (Portrait) or 1920x1080 (Landscape).
+     *    - Reference Resolution: 1080x1920 (Portrait)
      * 2. Touch Targets:
      *    - Minimum size of 44-48px for interactive elements.
      *    - Use 'suika-button' class with 100px height for comfortable touch on high-DPI screens.
@@ -322,8 +322,15 @@ StartScreen = StartScreen.Instantiate(root.Q<VisualElement>("StartScreen")),
             screen.SetStatus("Connecting to services...");
 
             try {
-                if (Unity.Services.Core.UnityServices.State != Unity.Services.Core.ServicesInitializationState.Initialized) {
+                // Wait for Unity Services to finish initializing (handles the race
+                // condition where ECS OnUpdate fires before GameInitializer.Awake completes).
+                if (Unity.Services.Core.UnityServices.State == Unity.Services.Core.ServicesInitializationState.Uninitialized) {
                     screen.SetStatus("Unity Services not initialized. Please start from InitBoot scene.");
+                    return;
+                }
+
+                if (Unity.Services.Core.UnityServices.State == Unity.Services.Core.ServicesInitializationState.Initializing) {
+                    screen.SetStatus("Services are starting up, please try again in a moment...");
                     return;
                 }
 
@@ -338,6 +345,9 @@ StartScreen = StartScreen.Instantiate(root.Q<VisualElement>("StartScreen")),
                     return;
                 }
                 screen.Populate(scores);
+            }
+            catch (Unity.Services.Core.ServicesInitializationException) {
+                screen.SetStatus("Services still starting up. Please try again in a moment.");
             }
             catch (Exception e) {
                 Debug.LogError($"Error fetching leaderboard: {e.Message}");
@@ -363,27 +373,16 @@ StartScreen = StartScreen.Instantiate(root.Q<VisualElement>("StartScreen")),
         }
 
         private static async void SubmitScoreToLeaderboard(int score) {
-try {
-                if (GameSystemLocator.IsInitialized)
-                {
-                    var gameManager = GameSystemLocator.Get<GameManagerUGS>();
-                    if (gameManager != null && gameManager.IsOfflineMode)
-                    {
-                        Debug.Log("[UGS Leaderboards] Skipping score submission (Offline Mode).");
-                        return;
+            try {
+                if (GameSystemLocator.IsInitialized) {
+                    var leaderboardManager = GameSystemLocator.Get<LeaderboardManager>();
+                    if (leaderboardManager != null) {
+                        Debug.Log($"[UGS Leaderboards] Submitting score: {score} via LeaderboardManager...");
+                        await leaderboardManager.SubmitScoreAsync(score, leaderboardManager.LastKnownSeed);
                     }
                 }
-
-                if (Unity.Services.Core.UnityServices.State == Unity.Services.Core.ServicesInitializationState.Initialized && 
-                    Unity.Services.Authentication.AuthenticationService.Instance.IsSignedIn) {
-Debug.Log($"[UGS Leaderboards] Submitting score: {score} to 'MergeGameLeaderboard'...");
-                    await Unity.Services.Leaderboards.LeaderboardsService.Instance.AddPlayerScoreAsync("MergeGameLeaderboard", score);
-                    Debug.Log("[UGS Leaderboards] Score submitted successfully!");
-                } else {
-                    Debug.LogWarning("[UGS Leaderboards] Cannot submit: Unity Services not initialized or player not signed in.");
-                }
             }
-            catch (System.Exception e) {
+            catch (Exception e) {
                 Debug.LogError($"[UGS Leaderboards] Error submitting score: {e.Message}");
             }
         }

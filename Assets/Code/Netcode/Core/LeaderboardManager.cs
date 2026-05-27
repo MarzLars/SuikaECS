@@ -42,18 +42,26 @@ namespace Suika.Scripts.Core
                 return null;
             }
 
-            EnsureAuthenticated();
+            try
+            {
+                EnsureAuthenticated();
 
-            var result = await LeaderboardsService.Instance.AddPlayerScoreAsync(
-                DefaultLeaderboardId,
-                score,
-                new AddPlayerScoreOptions
-                {
-                    Metadata = new { seed }
-                });
+                var result = await LeaderboardsService.Instance.AddPlayerScoreAsync(
+                    DefaultLeaderboardId,
+                    score,
+                    new AddPlayerScoreOptions
+                    {
+                        Metadata = new { seed }
+                    });
 
-            Logger.LogDemo($"Leaderboard submitted. Rank={result.Rank} Score={result.Score}");
-            return result;
+                Logger.LogDemo($"Leaderboard submitted. Rank={result.Rank} Score={result.Score}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Leaderboard score submission failed: {ex.Message}");
+                return null;
+            }
         }
 
         public async Task<LeaderboardScoresPage> GetGlobalLeaderboardAsync(int limit = 50, int offset = 0)
@@ -65,17 +73,25 @@ namespace Suika.Scripts.Core
                 return null;
             }
 
-            var scores = await LeaderboardsService.Instance.GetScoresAsync(
-                DefaultLeaderboardId,
-                new GetScoresOptions
-                {
-                    Limit = limit,
-                    Offset = offset,
-                    IncludeMetadata = true
-                });
+            try
+            {
+                var scores = await LeaderboardsService.Instance.GetScoresAsync(
+                    DefaultLeaderboardId,
+                    new GetScoresOptions
+                    {
+                        Limit = limit,
+                        Offset = offset,
+                        IncludeMetadata = true
+                    });
 
-            GlobalLeaderboardUpdated?.Invoke(scores);
-            return scores;
+                GlobalLeaderboardUpdated?.Invoke(scores);
+                return scores;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Leaderboards service not ready or failed to connect (is it enabled in the Unity Dashboard?): {ex.Message}");
+                return null;
+            }
         }
 
         static void EnsureAuthenticated()

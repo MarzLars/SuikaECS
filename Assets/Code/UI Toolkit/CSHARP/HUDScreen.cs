@@ -13,10 +13,6 @@ namespace Suika.UI
         Label m_ScoreLabel;
         Button m_SettingsButton;
         
-        VisualElement m_SocialButtons;
-        Button m_LeaderboardButton;
-        Button m_FriendsButton;
-        
         Label m_OpponentLabel;
 
         public static HUDScreen Instantiate(VisualElement parentElement) {
@@ -29,15 +25,9 @@ namespace Suika.UI
             screen.m_DropperMarker = screen.RootElement.Q<VisualElement>("hud__dropper-marker");
             screen.m_SettingsButton = screen.RootElement.Q<Button>("hud__settings-button");
             
-            screen.m_SocialButtons = screen.RootElement.Q<VisualElement>("hud__social-buttons");
-            screen.m_LeaderboardButton = screen.RootElement.Q<Button>("hud__leaderboard-button");
-            screen.m_FriendsButton = screen.RootElement.Q<Button>("hud__friends-button");
-            
             screen.m_OpponentLabel = screen.RootElement.Q<Label>("hud__opponent-label");
 
             screen.m_SettingsButton.clicked += screen.OnClickSettings;
-            screen.m_LeaderboardButton.clicked += screen.OnClickLeaderboard;
-            screen.m_FriendsButton.clicked += screen.OnClickFriends;
             
             screen.RootElement.style.display = DisplayStyle.None;
             return screen;
@@ -45,10 +35,6 @@ namespace Suika.UI
 
         public void SetScore(int score) {
             m_ScoreLabel.text = $"Score: {score}";
-        }
-
-        public void SetSocialButtonsVisible(bool visible) {
-            m_SocialButtons.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         public void SetOpponentScore(int score, string label = "Opponent to beat") {

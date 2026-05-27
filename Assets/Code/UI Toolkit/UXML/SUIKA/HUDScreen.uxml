@@ -14,11 +14,6 @@ This was created with the help of Assistant, a Unity Artificial Intelligence pro
         <engine:VisualElement name="hud__top-bar" style="flex-direction: row; justify-content: space-between; align-items: flex-start;">
             <engine:Button name="hud__settings-button" text="SETTINGS" class="suika-button"
                            style="width: 220px;"/>
-            
-            <engine:VisualElement name="hud__social-buttons" style="flex-direction: row; display: none;">
-                <engine:Button name="hud__leaderboard-button" text="LEADERBOARD" class="suika-button" style="width: 260px;"/>
-                <engine:Button name="hud__friends-button" text="FRIENDS" class="suika-button" style="width: 200px;"/>
-            </engine:VisualElement>
         </engine:VisualElement>
 
         <engine:VisualElement name="hud__score-container" style="align-items: center; flex-direction: column; margin-top: 20px;">

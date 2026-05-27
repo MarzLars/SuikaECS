@@ -6,5 +6,10 @@
                       style="font-size: 80px; color: white; -unity-font-style: bold; margin-bottom: 50px;"/>
         <engine:Button name="start__play-button" text="PLAY" class="suika-button"/>
         <engine:Button name="start__settings-button" text="SETTINGS" class="suika-button"/>
+        
+        <engine:VisualElement name="start__social-buttons" style="flex-direction: row; margin-top: 20px;">
+            <engine:Button name="start__leaderboard-button" text="LEADERBOARD" class="suika-button" style="width: 260px;"/>
+            <engine:Button name="start__friends-button" text="FRIENDS" class="suika-button" style="width: 200px;"/>
+        </engine:VisualElement>
     </engine:VisualElement>
 </engine:UXML>

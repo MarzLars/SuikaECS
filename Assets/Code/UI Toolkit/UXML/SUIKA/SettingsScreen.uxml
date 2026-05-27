@@ -23,6 +23,15 @@
                     <engine:FloatField name="settings__accelerometer-scale" label="Accelerometer Scale"/>
                     <engine:FloatField name="settings__accelerometer-smoothing" label="Accelerometer Smoothing"/>
                 </engine:VisualElement>
+                
+                <engine:VisualElement name="settings__social-section"
+                        style="padding: 16px; background-color: rgba(255,255,255,0.06); border-radius: 12px; gap: 10px;">
+                    <engine:Label text="Social Features" style="font-size: 34px; color: white; -unity-font-style: bold;"/>
+                    <engine:VisualElement style="flex-direction: row; justify-content: center;">
+                        <engine:Button name="settings__leaderboard-button" text="LEADERBOARD" class="suika-button" style="width: 260px;"/>
+                        <engine:Button name="settings__friends-button" text="FRIENDS" class="suika-button" style="width: 200px;"/>
+                    </engine:VisualElement>
+                </engine:VisualElement>
 
                 <engine:VisualElement
                         style="flex-direction: row; justify-content: space-between; gap: 16px; margin-top: 18px;">

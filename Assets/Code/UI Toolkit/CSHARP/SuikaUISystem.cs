@@ -80,7 +80,12 @@ namespace Suika.UI
             if (GameSystemLocator.IsInitialized) {
                 var authManager = GameSystemLocator.Get<PlayerAuthenticationManager>();
                 if (authManager != null) {
-                    screensData.HUDScreen.Value.SetSocialButtonsVisible(authManager.IsSignedInWithUnityAccount);
+                    bool shouldEnable = authManager.IsSignedInWithUnityAccount;
+#if UNITY_EDITOR
+                    shouldEnable = true; // Always enable in editor for verification
+#endif
+                    screensData.StartScreen.Value.SetSocialButtonsEnabled(shouldEnable);
+                    screensData.SettingsScreen.Value.SetSocialButtonsEnabled(shouldEnable);
                 }
             }
 

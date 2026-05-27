@@ -17,6 +17,9 @@ namespace Suika.UI
         Button m_BackButton;
         GameState m_ReturnToState;
         IntegerField m_SeedField;
+        
+        Button m_LeaderboardButton;
+        Button m_FriendsButton;
 
         public static SettingsScreen Instantiate(VisualElement parentElement) {
             var screen = CreateInstance<SettingsScreen>();
@@ -32,6 +35,9 @@ namespace Suika.UI
                 screen.RootElement.Q<FloatField>("settings__accelerometer-smoothing");
             screen.m_ApplyButton = screen.RootElement.Q<Button>("settings__apply-button");
             screen.m_BackButton = screen.RootElement.Q<Button>("settings__back-button");
+            
+            screen.m_LeaderboardButton = screen.RootElement.Q<Button>("settings__leaderboard-button");
+            screen.m_FriendsButton = screen.RootElement.Q<Button>("settings__friends-button");
 
             if (screen.m_SeedField == null)
                 throw new InvalidOperationException(
@@ -63,9 +69,19 @@ namespace Suika.UI
 
             screen.m_ApplyButton.clicked += screen.OnClickApply;
             screen.m_BackButton.clicked += screen.OnClickBack;
+            
+            if (screen.m_LeaderboardButton != null)
+                screen.m_LeaderboardButton.clicked += screen.OnClickLeaderboard;
+            if (screen.m_FriendsButton != null)
+                screen.m_FriendsButton.clicked += screen.OnClickFriends;
 
             screen.RootElement.style.display = DisplayStyle.None;
             return screen;
+        }
+
+        public void SetSocialButtonsEnabled(bool enabled) {
+            m_LeaderboardButton?.SetEnabled(enabled);
+            m_FriendsButton?.SetEnabled(enabled);
         }
 
         public void SetValues(uint seed, float aimMoveSpeed, float aimMinX, float aimMaxX, float accelerometerDeadZone,
@@ -116,6 +132,26 @@ namespace Suika.UI
             var entityManager = world.EntityManager;
             var entity = entityManager.CreateEntity();
             entityManager.AddComponentData(entity, new CloseSettingsEvent());
+            entityManager.AddComponentData(entity, new Event());
+        }
+
+        public void OnClickLeaderboard() {
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world is not { IsCreated: true }) return;
+
+            var entityManager = world.EntityManager;
+            var entity = entityManager.CreateEntity();
+            entityManager.AddComponentData(entity, new OpenLeaderboardEvent());
+            entityManager.AddComponentData(entity, new Event());
+        }
+
+        public void OnClickFriends() {
+            var world = World.DefaultGameObjectInjectionWorld;
+            if (world is not { IsCreated: true }) return;
+
+            var entityManager = world.EntityManager;
+            var entity = entityManager.CreateEntity();
+            entityManager.AddComponentData(entity, new OpenFriendsEvent());
             entityManager.AddComponentData(entity, new Event());
         }
     }
